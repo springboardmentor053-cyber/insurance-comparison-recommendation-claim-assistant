@@ -1,0 +1,308 @@
+🎯 Milestone 1: Foundations & Policy Catalog
+
+Duration: Week 1 and Week 2
+Goal:
+
+Users can securely log in and browse/compare insurance policies with pricing details.
+
+🟩 WEEK 1 – Authentication & Core Setup UI
+🔹 Objective (Week 1)
+
+Establish user access
+
+Prepare base UI layout
+
+No complex features yet (only foundation)
+
+✅ Week 1 – UI SCREENS (Text Format)
+1️⃣ Landing Page UI
+
+Purpose: Entry point for users
+
+UI Elements:
+
+Project title: Insurance Comparison & Claim Assistant
+
+Short description
+
+Buttons:
+
+Login
+
+Register
+
+Outcome:
+
+User understands what the application does
+
+2️⃣ Registration Page UI
+
+Purpose: New user signup
+
+Fields:
+
+Full Name
+
+Email
+
+Password
+
+Confirm Password
+
+Date of Birth
+
+Buttons:
+
+Register
+
+Already have an account? Login
+
+UI Notes:
+
+Form validation messages
+
+Clean, minimal Tailwind design
+
+3️⃣ Login Page UI
+
+Purpose: Authenticate user
+
+Fields:
+
+Email
+
+Password
+
+Buttons:
+
+Login
+
+Forgot Password (optional)
+
+System Action:
+
+On success → redirect to Dashboard
+
+4️⃣ Basic User Dashboard UI (Empty State)
+
+Purpose: Base layout after login
+
+Sections:
+
+Top Navbar:
+
+App name
+
+Logout button
+
+Sidebar:
+
+Dashboard
+
+Policies (disabled till Week 2)
+
+Claims (disabled)
+
+Main Area:
+
+Welcome message
+
+“Policies will be available soon”
+
+🧠 Week 1 – TASKS TO COMPLETE
+🔧 Backend Tasks
+
+JWT-based login & signup APIs
+
+Database tables:
+
+Users
+
+Providers
+
+Policies (schema only)
+
+Password hashing
+
+Auth middleware
+
+🎨 Frontend Tasks
+
+Landing page
+
+Login page UI
+
+Register page UI
+
+Base dashboard layout
+
+Route protection (private routes)
+
+✅ Week 1 Deliverable
+
+User can register, login, and access dashboard securely
+
+🟦 WEEK 2 – Policy Browse, Compare & Calculator UI
+🔹 Objective (Week 2)
+
+Let users view, compare, and understand policies
+
+No recommendations yet (that’s Milestone 2)
+
+✅ Week 2 – UI SCREENS (Text Format)
+1️⃣ Policy Listing Page UI
+
+Purpose: Display all insurance policies
+
+UI Layout:
+
+Search bar (policy name / provider)
+
+Filters:
+
+Policy Type (Health, Life, Auto, etc.)
+
+Premium range
+
+Policy cards showing:
+
+Policy Title
+
+Provider Name
+
+Policy Type
+
+Premium
+
+“View Details” button
+
+“Compare” checkbox
+
+2️⃣ Policy Details Page UI
+
+Purpose: Show full information of one policy
+
+Sections:
+
+Policy Title & Provider
+
+Coverage details
+
+Premium amount
+
+Deductible
+
+Term duration
+
+Terms & Conditions link
+
+Buttons:
+
+Add to Compare
+
+Back to Policy List
+
+3️⃣ Policy Comparison Page UI
+
+Purpose: Compare multiple policies
+
+UI Structure (Table Format):
+
+Rows:
+
+Provider
+
+Coverage
+
+Premium
+
+Deductible
+
+Policy Term
+
+Columns:
+
+Policy A
+
+Policy B
+
+Policy C
+
+Buttons:
+
+Remove Policy
+
+Select Policy (future use)
+
+4️⃣ Premium Calculator UI
+
+Purpose: Estimate premium
+
+Inputs:
+
+Age
+
+Policy Type
+
+Coverage amount
+
+Policy duration
+
+Output:
+
+Estimated premium shown dynamically
+
+5️⃣ Updated Dashboard UI
+
+Now shows:
+
+Total policies available
+
+Quick link:
+
+Browse Policies
+
+Compare Policies
+
+🧠 Week 2 – TASKS TO COMPLETE
+🔧 Backend Tasks
+
+API to fetch policies
+
+API to compare policies
+
+Seed sample policy data
+
+Premium calculation logic
+
+🎨 Frontend Tasks
+
+Policy listing page
+
+Policy details page
+
+Compare UI
+
+Premium calculator UI
+
+Filter & search UI
+
+✅ Week 2 Deliverable
+
+User can browse, compare, and calculate premiums for insurance policies
+
+🏁 Milestone 1 – FINAL OUTPUT (As per PDF)
+
+✔ Secure login system
+✔ Policy catalog available
+✔ Policy comparison UI
+✔ Premium calculators
+✔ Clean, scalable UI foundation
+
+(Exactly matches Milestone 1 Expected Output in the PDF) 
+
+Python_Insurance Comparison, Re…
+
+✍️ One-Line Exam / Review Summary
+
+In Milestone 1, the UI focuses on authentication and policy catalog features, allowing users to securely log in and browse, compare, and calculate insurance policies.
