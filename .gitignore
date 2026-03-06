@@ -78,6 +78,7 @@ coverage.xml
 
 # Misc
 *.spec
+
 DEMO_GUIDE.md
 demo_guide.md.resolved
 Python_Insurance Comparison, Recommendation & Claim Assistant.pdf
