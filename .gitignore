@@ -83,5 +83,6 @@ demo_guide.md.resolved
 Python_Insurance Comparison, Recommendation & Claim Assistant.pdf
 test_login_flow.py
 test_recommendations.py
-test_signup_flow.py
+test_signup_api.py
 updates.txt
+test_recommendation_logic.py
