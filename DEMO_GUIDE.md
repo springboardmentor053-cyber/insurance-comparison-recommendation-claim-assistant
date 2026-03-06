@@ -1,8 +1,4 @@
 
-# 🎓 Project Demo Guide: FastAPI & JWT
-
-Use this guide to demonstrate the technical highlights of your project to your mentor.
-
 ## 1. Showing FastAPI (The Backend)
 **Goal:** specificy that you are using a high-performance, modern Python web framework.
 
@@ -73,3 +69,5 @@ Use this guide to demonstrate the technical highlights of your project to your m
     Object.keys(p.coverage || {})
     ```
     *   *Explain:* "The comparison engine is dynamic. It doesn't hardcode fields; it adapts to whatever coverage details are in the database (JSON), making it flexible for new policy types."
+
+

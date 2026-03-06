@@ -12,6 +12,7 @@ class PolicyBase(BaseModel):
     term_months: int
     deductible: float
     coverage: Optional[dict] = None
+    description: Optional[str] = None
     tnc_url: Optional[str] = None
     provider_id: int
 

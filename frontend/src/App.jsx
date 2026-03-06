@@ -5,7 +5,6 @@ import Login from './components/Login';
 import Signup from './components/Signup';
 import PolicyList from './components/PolicyList';
 import Dashboard from './components/Dashboard';
-import PolicyDetails from './components/PolicyDetails';
 import ComparePolicies from './components/ComparePolicies';
 import PremiumCalculator from './components/PremiumCalculator';
 import Sidebar from './components/Sidebar';
@@ -27,6 +26,7 @@ const ProtectedRoute = ({ children }) => {
 
 import { useState } from 'react';
 import Profile from './components/Profile';
+import PolicyDetails from './components/PolicyDetails';
 
 // ... (imports remain)
 

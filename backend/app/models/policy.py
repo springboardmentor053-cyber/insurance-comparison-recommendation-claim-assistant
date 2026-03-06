@@ -19,6 +19,7 @@ class Policy(Base):
     provider_id = Column(Integer, ForeignKey("providers.id"))
     policy_type = Column(Enum(PolicyType), nullable=False)
     title = Column(String, index=True, nullable=False)
+    description = Column(String, nullable=True)
     coverage = Column(JSON)
     premium = Column(Numeric, nullable=False)
     term_months = Column(Integer)

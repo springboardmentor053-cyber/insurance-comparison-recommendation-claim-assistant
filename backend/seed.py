@@ -60,25 +60,27 @@ def seed_data():
     db.commit()
     print("Created Providers")
 
-    # Create Policies
+    # Create Policies — real-world aligned data
     classes_policies = [
-        # --- HEALTH ---
+        # ── HEALTH ──────────────────────────────────────────────────────
         Policy(
             provider_id=p1.id,
             policy_type=PolicyType.health,
             title="Basic Health Starter",
-            coverage={"hospital": 50000, "dental": False, "opd": False},
-            premium=200.0,
+            description="Entry-level plan for young adults. Covers hospitalization only.",
+            coverage={"hospital": 50000, "deductible": 1000},
+            premium=149.0,
             term_months=12,
-            deductible=500.0,
+            deductible=1000.0,
             tnc_url="http://example.com/health-basic"
         ),
         Policy(
             provider_id=p1.id,
             policy_type=PolicyType.health,
             title="Comprehensive Health Shield",
-            coverage={"hospital": 500000, "dental": True, "opd": True, "critical_illness": True},
-            premium=850.0,
+            description="All-inclusive plan with dental, OPD, and critical illness cover.",
+            coverage={"hospital": 500000, "dental": True, "opd": True, "critical_illness": True, "mental_health": True},
+            premium=620.0,
             term_months=12,
             deductible=200.0,
             tnc_url="http://example.com/health-shield"
@@ -86,180 +88,186 @@ def seed_data():
         Policy(
             provider_id=p1.id,
             policy_type=PolicyType.health,
-            title="Family Floater Plan",
-            coverage={"hospital": 1000000, "dental": True, "maternity": True},
-            premium=1200.0,
+            title="Family Floater Gold",
+            description="Covers entire family under one plan. Includes maternity and newborn care.",
+            coverage={"hospital": 1000000, "dental": True, "maternity": True, "newborn": True, "ambulance": True},
+            premium=1050.0,
             term_months=12,
-            deductible=100.0,
+            deductible=500.0,
             tnc_url="http://example.com/family-floater"
         ),
-         Policy(
+        Policy(
             provider_id=p3.id,
             policy_type=PolicyType.health,
-            title="Senior Citizen Care",
-            coverage={"hospital": 300000, "pre_existing": "Covered after 2 yrs", "ayush": True},
-            premium=1500.0,
-            term_months=12,
-            deductible=1000.0,
-            tnc_url="http://example.com/senior-care"
-        ),
-
-        # --- AUTO ---
-        Policy(
-            provider_id=p2.id,
-            policy_type=PolicyType.auto,
-            title="Standard Liability Auto",
-            coverage={"liability": 50000, "collision": False, "comprehensive": False},
-            premium=120.0,
-            term_months=6,
-            deductible=1000.0,
-            tnc_url="http://example.com/auto-liability"
-        ),
-        Policy(
-            provider_id=p2.id,
-            policy_type=PolicyType.auto,
-            title="Full Coverage Auto",
-            coverage={"liability": 100000, "collision": True, "comprehensive": True, "roadside_assist": True},
-            premium=450.0,
-            term_months=6,
-            deductible=500.0,
-            tnc_url="http://example.com/auto-full"
-        ),
-         Policy(
-            provider_id=p2.id,
-            policy_type=PolicyType.auto,
-            title="Ride Share Protect",
-            coverage={"liability": 200000, "passenger": True, "collision": True},
-            premium=600.0,
-            term_months=6,
-            deductible=250.0,
-            tnc_url="http://example.com/ride-share"
-        ),
-
-        # --- HOME ---
-        Policy(
-            provider_id=p3.id,
-            policy_type=PolicyType.home,
-            title="Homeowners Gold",
-            coverage={"structure": 500000, "contents": 100000, "liability": 300000, "fire": True, "theft": True},
-            premium=800.0,
+            title="Senior Citizen Care Plus",
+            description="Designed for seniors 60+. Covers pre-existing conditions after 24 months.",
+            coverage={"hospital": 300000, "pre_existing_covered": True, "ayush": True, "domiciliary": True},
+            premium=1400.0,
             term_months=12,
             deductible=1500.0,
-            tnc_url="http://example.com/home-gold"
-        ),
-        Policy(
-            provider_id=p3.id,
-            policy_type=PolicyType.home,
-            title="Renters Essentials",
-            coverage={"contents": 30000, "liability": 100000, "fire": True},
-            premium=150.0,
-            term_months=12,
-            deductible=250.0,
-            tnc_url="http://example.com/renters"
-        ),
-         Policy(
-            provider_id=p1.id,
-            policy_type=PolicyType.home,
-            title="Smart Home Special",
-            coverage={"structure": 400000, "iot_device_protection": True, "cyber_security": True},
-            premium=750.0,
-            term_months=12,
-            deductible=1000.0,
-            tnc_url="http://example.com/smart-home"
-        ),
-
-        # --- LIFE ---
-        Policy(
-            provider_id=p1.id,
-            policy_type=PolicyType.life,
-            title="Term Life 20-Year",
-            coverage={"death_benefit": 500000, "accidental_death": False},
-            premium=300.0,
-            term_months=12,
-            deductible=0.0,
-            tnc_url="http://example.com/term-life"
-        ),
-         Policy(
-            provider_id=p1.id,
-            policy_type=PolicyType.life,
-            title="Whole Life Premium",
-            coverage={"death_benefit": 1000000, "cash_value": True, "dividends": True},
-            premium=1200.0,
-            term_months=12,
-            deductible=0.0,
-            tnc_url="http://example.com/whole-life"
-        ),
-
-        # --- TRAVEL ---
-        Policy(
-            provider_id=p2.id,
-            policy_type=PolicyType.travel,
-            title="Global Voyager",
-            coverage={"medical": 100000, "trip_cancellation": True, "baggage_loss": True},
-            premium=50.0,
-            term_months=1,
-            deductible=100.0,
-            tnc_url="http://example.com/travel-global"
-        ),
-        Policy(
-            provider_id=p2.id,
-            policy_type=PolicyType.travel,
-            title="Student Abroad",
-            coverage={"medical": 200000, "study_interruption": True, "sponsor_protection": True},
-            premium=180.0,
-            term_months=6,
-            deductible=100.0,
-            tnc_url="http://example.com/student-travel"
-        ),
-        Policy(
-            provider_id=p2.id,
-            policy_type=PolicyType.travel,
-            title="Business Class Travel",
-            coverage={"medical": 500000, "laptop_loss": True, "meeting_cancellation": True},
-            premium=120.0,
-            term_months=1,
-            deductible=50.0,
-            tnc_url="http://example.com/business-travel"
-        ),
-        Policy(
-            provider_id=p3.id,
-            policy_type=PolicyType.life,
-            title="Senior Life Protect",
-            coverage={"death_benefit": 200000, "funeral_expenses": True},
-            premium=600.0,
-            term_months=12,
-            deductible=0.0,
-            tnc_url="http://example.com/senior-life"
+            tnc_url="http://example.com/senior-care"
         ),
         Policy(
             provider_id=p1.id,
             policy_type=PolicyType.health,
             title="Critical Illness Cover",
-            coverage={"cancer": True, "heart_attack": True, "stroke": True, "lump_sum": 50000},
-            premium=350.0,
+            description="Lump sum payout on diagnosis of 20+ critical illnesses including cancer, stroke.",
+            coverage={"cancer": True, "heart_attack": True, "stroke": True, "kidney_failure": True, "lump_sum_payout": 200000},
+            premium=290.0,
             term_months=12,
             deductible=0.0,
             tnc_url="http://example.com/critical-illness"
         ),
-         Policy(
+
+        # ── AUTO ─────────────────────────────────────────────────────────
+        Policy(
             provider_id=p2.id,
             policy_type=PolicyType.auto,
-            title="Classic Car Insurance",
-            coverage={"agreed_value": True, "show_transport": True, "spare_parts": True},
-            premium=300.0,
+            title="Third Party Liability",
+            description="Mandatory coverage for third party damage and injury. No own damage cover.",
+            coverage={"third_party_liability": 100000},
+            premium=99.0,
+            term_months=12,
+            deductible=0.0,
+            tnc_url="http://example.com/auto-tpl"
+        ),
+        Policy(
+            provider_id=p2.id,
+            policy_type=PolicyType.auto,
+            title="Comprehensive Auto Plan",
+            description="Full coverage including collision, theft, fire, and natural disasters.",
+            coverage={"own_damage": 500000, "third_party_liability": 300000, "collision": True, "theft": True, "natural_disaster": True, "roadside_assist": True},
+            premium=420.0,
             term_months=12,
             deductible=500.0,
-            tnc_url="http://example.com/classic-car"
+            tnc_url="http://example.com/auto-full"
+        ),
+        Policy(
+            provider_id=p2.id,
+            policy_type=PolicyType.auto,
+            title="Fleet & Commercial Vehicle",
+            description="For commercial use vehicles. Covers fleet up to 5 vehicles including passenger liability.",
+            coverage={"fleet_coverage": True, "passenger_liability": 500000, "goods_in_transit": True, "breakdown_assist": True},
+            premium=780.0,
+            term_months=12,
+            deductible=1000.0,
+            tnc_url="http://example.com/fleet-commercial"
+        ),
+        Policy(
+            provider_id=p2.id,
+            policy_type=PolicyType.auto,
+            title="Electric Vehicle Shield",
+            description="Specialized policy for EV owners. Covers battery, charging equipment, and roadside assist.",
+            coverage={"battery_protection": True, "charging_equipment": True, "collision": True, "roadside_assist": True, "own_damage": 400000},
+            premium=340.0,
+            term_months=12,
+            deductible=500.0,
+            tnc_url="http://example.com/ev-shield"
+        ),
+
+        # ── HOME ─────────────────────────────────────────────────────────
+        Policy(
+            provider_id=p3.id,
+            policy_type=PolicyType.home,
+            title="Renters Basic",
+            description="Affordable coverage for renters. Protects personal belongings and liability.",
+            coverage={"contents": 30000, "personal_liability": 100000},
+            premium=140.0,
+            term_months=12,
+            deductible=250.0,
+            tnc_url="http://example.com/renters-basic"
         ),
         Policy(
             provider_id=p3.id,
             policy_type=PolicyType.home,
-            title="Tiny Home Insurance",
-            coverage={"structure": 100000, "contents": 20000, "mobility": True},
-            premium=400.0,
+            title="Homeowners Gold",
+            description="Complete homeowner coverage: structure, contents, liability, fire, and theft.",
+            coverage={"structure": 600000, "contents": 150000, "personal_liability": 300000, "fire": True, "theft": True, "water_damage": True},
+            premium=780.0,
             term_months=12,
-            deductible=500.0,
-            tnc_url="http://example.com/tiny-home"
+            deductible=1500.0,
+            tnc_url="http://example.com/homeowners-gold"
+        ),
+        Policy(
+            provider_id=p1.id,
+            policy_type=PolicyType.home,
+            title="Smart Home Premium",
+            description="Modern home plan with IoT device protection, cyber cover, and home office rider.",
+            coverage={"structure": 500000, "iot_devices": True, "cyber_security": True, "home_office": True, "contents": 200000, "natural_disaster": True},
+            premium=920.0,
+            term_months=12,
+            deductible=1000.0,
+            tnc_url="http://example.com/smart-home"
+        ),
+
+        # ── LIFE ─────────────────────────────────────────────────────────
+        Policy(
+            provider_id=p1.id,
+            policy_type=PolicyType.life,
+            title="Pure Term Life 20-Year",
+            description="Pure protection plan. High sum assured at the lowest cost. Ideal for breadwinners.",
+            coverage={"death_benefit": 1000000, "accidental_death_rider": True},
+            premium=280.0,
+            term_months=12,
+            deductible=0.0,
+            tnc_url="http://example.com/term-life"
+        ),
+        Policy(
+            provider_id=p1.id,
+            policy_type=PolicyType.life,
+            title="Whole Life with Savings",
+            description="Lifelong coverage with cash value accumulation and annual dividend benefits.",
+            coverage={"death_benefit": 500000, "cash_value": True, "dividends": True, "premium_waiver": True},
+            premium=1100.0,
+            term_months=12,
+            deductible=0.0,
+            tnc_url="http://example.com/whole-life"
+        ),
+        Policy(
+            provider_id=p3.id,
+            policy_type=PolicyType.life,
+            title="Senior Life Protect",
+            description="Guaranteed acceptance plan for ages 50–80. Covers funeral expenses and outstanding debts.",
+            coverage={"death_benefit": 150000, "funeral_expenses": True, "no_medical_exam": True},
+            premium=520.0,
+            term_months=12,
+            deductible=0.0,
+            tnc_url="http://example.com/senior-life"
+        ),
+        Policy(
+            provider_id=p2.id,
+            policy_type=PolicyType.life,
+            title="Income Protection Plan",
+            description="Pays monthly income if you're unable to work due to illness or injury. Covers up to 60% of salary.",
+            coverage={"income_replacement": True, "disability_cover": True, "critical_illness": True, "monthly_benefit": 3000},
+            premium=380.0,
+            term_months=12,
+            deductible=0.0,
+            tnc_url="http://example.com/income-protect"
+        ),
+
+        # ── TRAVEL ───────────────────────────────────────────────────────
+        Policy(
+            provider_id=p2.id,
+            policy_type=PolicyType.travel,
+            title="International Travel Essentials",
+            description="Essential cover for international trips: emergency medical, trip cancellation, and baggage.",
+            coverage={"emergency_medical": 100000, "trip_cancellation": True, "baggage_loss": True},
+            premium=45.0,
+            term_months=1,
+            deductible=100.0,
+            tnc_url="http://example.com/travel-essential"
+        ),
+        Policy(
+            provider_id=p2.id,
+            policy_type=PolicyType.travel,
+            title="Student Abroad Protect",
+            description="Long-stay plan for students. Covers study interruption, sponsor protection, and full medical.",
+            coverage={"emergency_medical": 200000, "study_interruption": True, "sponsor_protection": True, "repatriation": True},
+            premium=165.0,
+            term_months=6,
+            deductible=100.0,
+            tnc_url="http://example.com/student-travel"
         ),
     ]
     db.add_all(classes_policies)

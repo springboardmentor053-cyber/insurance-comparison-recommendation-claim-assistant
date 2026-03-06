@@ -1,11 +1,16 @@
-
 from sqlalchemy.orm import Session
 from app.models.user import User
-from app.schemas.user import UserCreate
+from app.schemas.user import UserCreate, RiskProfileUpdate
 from app.core.security import get_password_hash
+
 
 def get_by_email(db: Session, email: str) -> User:
     return db.query(User).filter(User.email == email).first()
+
+
+def get(db: Session, id: int) -> User:
+    return db.query(User).filter(User.id == id).first()
+
 
 def create(db: Session, obj_in: UserCreate) -> User:
     risk_profile_data = {
@@ -30,3 +35,18 @@ def create(db: Session, obj_in: UserCreate) -> User:
     db.commit()
     db.refresh(db_obj)
     return db_obj
+
+
+def update_risk_profile(db: Session, user: User, profile_in: RiskProfileUpdate) -> User:
+    """
+    Merge new risk profile fields into the existing risk_profile JSON.
+    Only updates fields that are explicitly provided (not None).
+    """
+    existing = user.risk_profile or {}
+    updates = profile_in.model_dump(exclude_none=True)
+    merged = {**existing, **updates}
+    user.risk_profile = merged
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
