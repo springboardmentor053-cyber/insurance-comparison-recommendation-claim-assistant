@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import API from "../api";
 import PremiumCalculator from "../components/PremiumCalculator";
+import RecommendationsList from "../components/RecommendationsList";
+import RecommendationsView from "../components/RecommendationsView";
+import PreferencesWizard from "../components/PreferencesWizard";
 
 // Policy type color mapping for better UX
 const policyTypeColors = {
@@ -20,7 +23,7 @@ const policyTypeIcons = {
   'travel': '✈️'
 };
 
-function Policies() {
+function Policies({ showRecommendations: externalShowRecs, setShowRecommendations: externalSetShowRecs }) {
   const [policies, setPolicies] = useState([]);
   const [filteredPolicies, setFilteredPolicies] = useState([]);
   const [selectedPolicies, setSelectedPolicies] = useState([]);
@@ -28,6 +31,10 @@ function Policies() {
   const [isComparing, setIsComparing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
+  const [showRecommendations, setShowRecommendations] = useState(false);
+  const [showFullRecommendations, setShowFullRecommendations] = useState(false);
+  const [showPreferencesWizard, setShowPreferencesWizard] = useState(false);
+  const [recommendationsCount, setRecommendationsCount] = useState(0);
   
   // Filter states
   const [selectedTypes, setSelectedTypes] = useState([]);
@@ -37,6 +44,57 @@ function Policies() {
   const [searchTerm, setSearchTerm] = useState("");
   
   const [user, setUser] = useState({ dob: "1996-01-01", risk_profile: {} });
+
+  // Load recommendations count
+  const loadRecommendationsCount = async () => {
+    try {
+      const res = await API.get('/recommendations/?limit=100');
+      setRecommendationsCount(res.data.length);
+    } catch (err) {
+      console.error('Failed to load recommendations count', err);
+    }
+  };
+
+  // Handle view all recommendations
+  const handleViewAllRecommendations = () => {
+    setShowFullRecommendations(true);
+  };
+
+  // Handle back from full recommendations
+  const handleBackFromFullRecommendations = () => {
+    setShowFullRecommendations(false);
+  };
+
+  // Listen for toggle events from App.jsx
+  useEffect(() => {
+    const handleToggle = (event) => {
+      setShowRecommendations(event.detail.show);
+      // Reset full view when toggling from nav
+      if (!event.detail.show) {
+        setShowFullRecommendations(false);
+      }
+    };
+    
+    window.addEventListener('toggleRecommendations', handleToggle);
+    return () => window.removeEventListener('toggleRecommendations', handleToggle);
+  }, []);
+
+  // Sync with external state if provided
+  useEffect(() => {
+    if (externalShowRecs !== undefined) {
+      setShowRecommendations(externalShowRecs);
+      if (!externalShowRecs) {
+        setShowFullRecommendations(false);
+      }
+    }
+  }, [externalShowRecs]);
+
+  // Notify parent of changes
+  useEffect(() => {
+    if (externalSetShowRecs) {
+      externalSetShowRecs(showRecommendations);
+    }
+  }, [showRecommendations, externalSetShowRecs]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -66,6 +124,13 @@ function Policies() {
       });
   }, []);
 
+  // Load recommendations count when user is available and recommendations are showing
+  useEffect(() => {
+    if (user?.id && showRecommendations) {
+      loadRecommendationsCount();
+    }
+  }, [user, showRecommendations]);
+
   // Apply filters
   useEffect(() => {
     let filtered = [...policies];
@@ -74,7 +139,7 @@ function Policies() {
     if (searchTerm) {
       filtered = filtered.filter(p => 
         p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.description.toLowerCase().includes(searchTerm.toLowerCase())
+        p.description?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
     
@@ -131,6 +196,17 @@ function Policies() {
     setSelectedProviders([]);
     setSearchTerm("");
     setPriceRange(prev => ({ ...prev, min: 0, max: Math.max(...policies.map(p => parseFloat(p.premium || 0))) }));
+  };
+
+  const handlePreferencesComplete = () => {
+    setShowPreferencesWizard(false);
+    setShowRecommendations(true);
+    setShowFullRecommendations(false);
+    // Refresh user data
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
   };
 
   // Loading state
@@ -227,12 +303,13 @@ function Policies() {
 
   return (
     <div className="relative px-6">
+      {/* Header section - NO matches badge here */}
       <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
           <h1 className="text-5xl font-black text-slate-900 tracking-tighter">POLICIES</h1>
           <p className="text-slate-500 font-bold text-sm mt-2">
             {user.name ? `Welcome back, ${user.name}! ` : ''}
-            {filteredPolicies.length} of {policies.length} plans available
+            Showing {filteredPolicies.length} of {policies.length} plans
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -261,8 +338,8 @@ function Policies() {
         </div>
       </div>
 
-      {/* FILTERS SECTION */}
-      {showFilters && (
+      {/* FILTERS SECTION - Only show when not in recommendations mode */}
+      {showFilters && !showRecommendations && (
         <div className="mb-10 bg-white/90 backdrop-blur-sm rounded-3xl border border-slate-200 shadow-xl p-8 animate-in slide-in-from-top-5 duration-300">
           <div className="flex justify-between items-center mb-6">
             <h3 className="font-black text-slate-900">Filter Policies</h3>
@@ -365,80 +442,135 @@ function Policies() {
         </div>
       )}
 
-      {/* RESULTS COUNT */}
-      <div className="mb-6 text-xs font-bold text-slate-400">
-        Showing {filteredPolicies.length} policies
-      </div>
+      {/* RECOMMENDATIONS SECTION - Top 10 view */}
+      {showRecommendations && !showFullRecommendations && (
+        <div className="mb-12 animate-in slide-in-from-top-5 duration-300">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-4">
+              <h2 className="text-2xl font-black text-slate-900">🎯 Personalized Recommendations</h2>
+              {recommendationsCount > 0 && (
+                <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                  Top 10 of {recommendationsCount} matches
+                </div>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={handleViewAllRecommendations}
+                className="text-sm font-bold text-blue-600 hover:text-blue-800"
+              >
+                View All ({recommendationsCount})
+              </button>
+              <button
+                onClick={() => setShowPreferencesWizard(true)}
+                className="text-sm font-bold text-blue-600 hover:text-blue-800"
+              >
+                Update Preferences
+              </button>
+            </div>
+          </div>
+          <RecommendationsList onSelectPolicy={(policy) => setViewingDetails(policy)} />
+        </div>
+      )}
 
-      {/* POLICIES GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-40">
-        {filteredPolicies.map((p) => {
-          const isSelected = selectedPolicies.some((item) => item.id === p.id);
-          return (
-            <div 
-              key={p.id} 
-              className={`group bg-white/90 backdrop-blur-sm border-2 rounded-3xl p-8 flex flex-col transition-all duration-500 ${
-                isSelected ? 'border-blue-600 shadow-2xl scale-[1.02]' : 'border-slate-200 shadow-lg hover:shadow-xl hover:bg-white'
-              }`}
+      {/* FULL RECOMMENDATIONS VIEW - All recommendations with filters */}
+      {showFullRecommendations && (
+        <RecommendationsView 
+          onSelectPolicy={(policy) => setViewingDetails(policy)}
+          onBack={handleBackFromFullRecommendations}
+        />
+      )}
+
+      {/* PREFERENCES WIZARD MODAL */}
+      {showPreferencesWizard && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="relative max-w-2xl w-full">
+            <button
+              onClick={() => setShowPreferencesWizard(false)}
+              className="absolute -top-12 right-0 text-white text-4xl hover:text-slate-300"
             >
-              <div className="flex justify-between items-start mb-6">
-                <span className={`text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest flex items-center gap-1 ${
-                  policyTypeColors[p.policy_type] || 'bg-slate-100 text-slate-500'
-                }`}>
-                  <span>{policyTypeIcons[p.policy_type]}</span>
-                  <span>{p.policy_type}</span>
-                </span>
-                <span className="text-2xl font-black text-blue-600">₹{parseFloat(p.premium || 0).toLocaleString()}</span>
-              </div>
-              
-              <h2 className="text-xl font-black text-slate-800 mb-2 leading-tight">{p.title}</h2>
-              
-              <div className="text-slate-400 text-xs font-bold mb-4 flex items-center gap-2 flex-wrap">
-                <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded-full text-[10px] font-black">
-                  {p.provider?.name || p.provider_name || 'Covermate'}
-                </span>
-                <span>•</span>
-                <span>Deductible: ₹{parseFloat(p.deductible || 0).toLocaleString()}</span>
-                <span>•</span>
-                <span>{p.term_months} Months</span>
-              </div>
-              
-              <p className="text-slate-500 text-sm mb-8 grow leading-relaxed">{p.description}</p>
-              
-              <div className="flex gap-3 mt-auto">
-                <button 
-                  onClick={() => toggleCompare(p)} 
-                  className={`flex-1 text-[11px] font-black uppercase tracking-widest py-4 rounded-2xl border-2 transition-all ${
-                    isSelected ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'
+              ×
+            </button>
+            <PreferencesWizard 
+              onComplete={handlePreferencesComplete}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* POLICIES GRID - Only show when NOT in recommendations mode */}
+      {!showRecommendations && !showFullRecommendations && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-40">
+            {filteredPolicies.map((p) => {
+              const isSelected = selectedPolicies.some((item) => item.id === p.id);
+              return (
+                <div 
+                  key={p.id} 
+                  className={`group bg-white/90 backdrop-blur-sm border-2 rounded-3xl p-8 flex flex-col transition-all duration-500 ${
+                    isSelected ? 'border-blue-600 shadow-2xl scale-[1.02]' : 'border-slate-200 shadow-lg hover:shadow-xl hover:bg-white'
                   }`}
                 >
-                  {isSelected ? "Selected" : "Compare"}
-                </button>
-                <button 
-                  onClick={() => setViewingDetails(p)} 
-                  className="flex-1 text-[11px] font-black uppercase tracking-widest bg-slate-900 text-white py-4 rounded-2xl hover:bg-blue-600 transition-all shadow-lg"
-                >
-                  Details
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+                  <div className="flex justify-between items-start mb-6">
+                    <span className={`text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest flex items-center gap-1 ${
+                      policyTypeColors[p.policy_type] || 'bg-slate-100 text-slate-500'
+                    }`}>
+                      <span>{policyTypeIcons[p.policy_type]}</span>
+                      <span>{p.policy_type}</span>
+                    </span>
+                    <span className="text-2xl font-black text-blue-600">₹{parseFloat(p.premium || 0).toLocaleString()}</span>
+                  </div>
+                  
+                  <h2 className="text-xl font-black text-slate-800 mb-2 leading-tight">{p.title}</h2>
+                  
+                  <div className="text-slate-400 text-xs font-bold mb-4 flex items-center gap-2 flex-wrap">
+                    <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded-full text-[10px] font-black">
+                      {p.provider?.name || p.provider_name || 'Covermate'}
+                    </span>
+                    <span>•</span>
+                    <span>Deductible: ₹{parseFloat(p.deductible || 0).toLocaleString()}</span>
+                    <span>•</span>
+                    <span>{p.term_months} Months</span>
+                  </div>
+                  
+                  <p className="text-slate-500 text-sm mb-8 grow leading-relaxed">{p.description}</p>
+                  
+                  <div className="flex gap-3 mt-auto">
+                    <button 
+                      onClick={() => toggleCompare(p)} 
+                      className={`flex-1 text-[11px] font-black uppercase tracking-widest py-4 rounded-2xl border-2 transition-all ${
+                        isSelected ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-white text-slate-400 border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      {isSelected ? "Selected" : "Compare"}
+                    </button>
+                    <button 
+                      onClick={() => setViewingDetails(p)} 
+                      className="flex-1 text-[11px] font-black uppercase tracking-widest bg-slate-900 text-white py-4 rounded-2xl hover:bg-blue-600 transition-all shadow-lg"
+                    >
+                      Details
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
-      {/* NO RESULTS MESSAGE */}
-      {filteredPolicies.length === 0 && (
-        <div className="text-center py-20">
-          <div className="text-6xl mb-4">🔍</div>
-          <h3 className="text-2xl font-black text-slate-400 mb-2">No policies found</h3>
-          <p className="text-slate-400">Try adjusting your filters</p>
-          <button
-            onClick={clearFilters}
-            className="mt-6 px-8 py-4 bg-blue-600 text-white rounded-2xl font-bold text-sm hover:bg-blue-700 transition"
-          >
-            Clear Filters
-          </button>
-        </div>
+          {/* NO RESULTS MESSAGE */}
+          {filteredPolicies.length === 0 && (
+            <div className="text-center py-20">
+              <div className="text-6xl mb-4">🔍</div>
+              <h3 className="text-2xl font-black text-slate-400 mb-2">No policies found</h3>
+              <p className="text-slate-400">Try adjusting your filters</p>
+              <button
+                onClick={clearFilters}
+                className="mt-6 px-8 py-4 bg-blue-600 text-white rounded-2xl font-bold text-sm hover:bg-blue-700 transition"
+              >
+                Clear Filters
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       {/* FLOATING ACTION BAR */}

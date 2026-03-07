@@ -1,22 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from .. import models, schemas, database
-from jose import jwt
+from app import models, schemas, database  # Changed from . to app
+from app.auth import get_current_user, create_access_token  # Changed from . to app.auth
+from datetime import timedelta
 import os
-from datetime import datetime, timedelta
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 # Get JWT settings from environment or use defaults
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-for-development")
-ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
-
-def create_access_token(data: dict):
-    to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 @router.post("/register")
 def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
@@ -77,3 +69,8 @@ def login(user_credentials: schemas.UserLogin, db: Session = Depends(database.ge
             "risk_profile": user.risk_profile
         }
     }
+
+@router.get("/me", response_model=schemas.UserResponse)
+async def get_current_user_info(current_user: models.User = Depends(get_current_user)):
+    """Get current logged in user information"""
+    return current_user

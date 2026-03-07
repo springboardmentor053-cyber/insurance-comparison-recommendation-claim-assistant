@@ -61,7 +61,7 @@ const PremiumCalculator = ({ basePremium, userDob, userRiskProfile, policyType =
     const coverageFactor = coverageAmount / 100000;
     const finalResult = basePremium * ageFactor * riskMultiplier * coverageFactor * policyFactor;
     
-    setCalculatedPremium(Math.round(finalResult).toFixed(0));
+    setCalculatedPremium(Math.round(finalResult));
 
   }, [coverageAmount, basePremium, userDob, userRiskProfile, policyType]);
 
@@ -79,32 +79,37 @@ const PremiumCalculator = ({ basePremium, userDob, userRiskProfile, policyType =
   const range = getCoverageRange();
 
   return (
-    <div className="bg-slate-50/80 backdrop-blur-sm p-6 rounded-3xl border-2 border-yellow-400 my-8 shadow-lg">
-      <div className="flex justify-between items-center mb-6">
+    <div className="bg-linear-to-br from-slate-50 to-white p-6 rounded-2xl border border-slate-200 shadow-lg">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-lg font-black text-slate-900 leading-tight uppercase">
-            {policyType.toUpperCase()} Premium Estimator
+          <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">
+            {policyType.toUpperCase()} PREMIUM ESTIMATOR
           </h3>
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Covermate v2.6</p>
+          <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+            COVERMATE v2.6
+          </p>
         </div>
-        <div className="text-right">
-          <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter ${
-            userRiskProfile?.level === 'High' ? 'bg-red-500 text-white' : 
-            userRiskProfile?.level === 'Medium' ? 'bg-yellow-500 text-white' :
-            'bg-yellow-400 text-slate-900'
-          }`}>
-            {userRiskProfile?.level || 'LOW'} RISK
-          </span>
+        <div className={`px-3 py-1 rounded-full text-[10px] font-black ${
+          userRiskProfile?.level === 'High' ? 'bg-red-100 text-red-600' : 
+          userRiskProfile?.level === 'Medium' ? 'bg-yellow-100 text-yellow-600' :
+          'bg-green-100 text-green-600'
+        }`}>
+          {userRiskProfile?.level || 'LOW'} RISK
         </div>
       </div>
       
-      <div className="mb-8 px-2">
-        <div className="flex justify-between items-end mb-4">
-          <label className="text-xs font-black text-slate-500 uppercase tracking-widest">
-            Coverage Amount ({policyType})
+      {/* Coverage Slider */}
+      <div className="mb-6">
+        <div className="flex justify-between items-center mb-3">
+          <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider">
+            COVERAGE AMOUNT ({policyType.toUpperCase()})
           </label>
-          <span className="text-2xl font-black text-slate-900">₹{coverageAmount.toLocaleString()}</span>
+          <span className="text-lg font-black text-slate-900">
+            ₹{(coverageAmount / 100000).toFixed(1)}L
+          </span>
         </div>
+        
         <input 
           type="range" 
           min={range.min}
@@ -112,53 +117,53 @@ const PremiumCalculator = ({ basePremium, userDob, userRiskProfile, policyType =
           step={range.step}
           value={coverageAmount}
           onChange={(e) => setCoverageAmount(Number(e.target.value))}
-          className="w-full h-3 bg-slate-200 rounded-full appearance-none cursor-pointer accent-yellow-500 hover:accent-yellow-400 transition-all"
+          className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
         />
-        <div className="flex justify-between text-[10px] font-bold text-slate-400 mt-2">
-          <span>₹{range.min.toLocaleString()}</span>
-          <span>₹{range.max.toLocaleString()}</span>
+        
+        <div className="flex justify-between mt-2">
+          <span className="text-[10px] font-bold text-slate-400">
+            ₹{(range.min / 100000).toFixed(1)}L
+          </span>
+          <span className="text-[10px] font-bold text-slate-400">
+            ₹{(range.max / 100000).toFixed(1)}L
+          </span>
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-2xl shadow-md border border-yellow-100 flex items-center justify-between">
-        <div className="space-y-1">
-          <p className="text-[10px] text-yellow-600 font-black uppercase tracking-[0.2em]">Annual Quote</p>
-          <div className="flex items-baseline gap-1">
-            <span className="text-sm font-black text-slate-900">₹</span>
-            <span className="text-4xl font-black text-slate-900 tracking-tighter">
-              {Number(calculatedPremium).toLocaleString()}
+      {/* Quote */}
+      <div className="bg-blue-50 rounded-xl p-4 flex items-center justify-between">
+        <div>
+          <p className="text-[8px] font-black text-blue-600 uppercase tracking-wider mb-1">
+            ANNUAL QUOTE
+          </p>
+          <div className="flex items-baseline">
+            <span className="text-xl font-black text-slate-900">₹</span>
+            <span className="text-3xl font-black text-slate-900 tracking-tighter">
+              {calculatedPremium.toLocaleString()}
             </span>
           </div>
         </div>
         
-        <button className="bg-yellow-400 text-slate-900 h-14 px-8 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-yellow-500 hover:-translate-y-1 transition-all active:scale-95 shadow-md shadow-yellow-200">
-          Proceed
+        <button className="bg-blue-600 text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-wider hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
+          PROCEED
         </button>
       </div>
 
-      <div className="mt-6 pt-4 border-t border-slate-200 grid grid-cols-3 gap-2">
+      {/* Quick Stats */}
+      <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-3 gap-2 text-center">
         <div>
-          <p className="text-[9px] font-bold text-slate-400 uppercase">Age</p>
-          <p className="text-xs font-black text-slate-700">{calculateAge(userDob)} years</p>
+          <p className="text-[8px] font-bold text-slate-400 uppercase">Age</p>
+          <p className="text-xs font-black text-slate-700">{calculateAge(userDob)}</p>
         </div>
         <div>
-          <p className="text-[9px] font-bold text-slate-400 uppercase">Risk Level</p>
-          <p className="text-xs font-black text-slate-700">{userRiskProfile?.level || 'Standard'}</p>
+          <p className="text-[8px] font-bold text-slate-400 uppercase">Term</p>
+          <p className="text-xs font-black text-slate-700">12m</p>
         </div>
         <div>
-          <p className="text-[9px] font-bold text-slate-400 uppercase">Policy Type</p>
+          <p className="text-[8px] font-bold text-slate-400 uppercase">Type</p>
           <p className="text-xs font-black text-slate-700 capitalize">{policyType}</p>
         </div>
       </div>
-      
-      {userRiskProfile?.health_declarations && userRiskProfile.health_declarations !== "None" && (
-        <div className="mt-2 pt-2 border-t border-slate-200">
-          <p className="text-[9px] font-bold text-slate-400 uppercase">Risk Factors</p>
-          <p className="text-xs font-medium text-amber-600 italic truncate">
-            {userRiskProfile.health_declarations}
-          </p>
-        </div>
-      )}
     </div>
   );
 };

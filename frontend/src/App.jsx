@@ -6,6 +6,7 @@ import Register from "./pages/Register";
 
 function App() {
   const [user, setUser] = useState(null);
+  const [showRecommendations, setShowRecommendations] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -41,9 +42,33 @@ function App() {
               <Link to="/" className="text-2xl font-black tracking-tighter text-blue-600">
                 COVERMATE
               </Link>
-              <div className="hidden md:flex gap-6 text-[11px] font-black uppercase tracking-widest text-slate-400">
-                <Link to="/" className="hover:text-blue-600 transition">Catalog</Link>
-                <Link to="#" className="opacity-30 cursor-not-allowed">Recommendations</Link>
+              <div className="hidden md:flex gap-6 text-[11px] font-black uppercase tracking-widest">
+                <Link 
+                  to="/" 
+                  className="text-slate-400 hover:text-blue-600 transition"
+                >
+                  Catalog
+                </Link>
+                <button
+                  onClick={() => {
+                    if (user) {
+                      setShowRecommendations(!showRecommendations);
+                      // If we're on policies page, we need to pass this state
+                      window.dispatchEvent(new CustomEvent('toggleRecommendations', { 
+                        detail: { show: !showRecommendations } 
+                      }));
+                    } else {
+                      window.location.href = "/login";
+                    }
+                  }}
+                  className={`${
+                    showRecommendations 
+                      ? 'text-blue-600' 
+                      : 'text-slate-400 hover:text-blue-600'
+                  } transition bg-transparent border-none cursor-pointer font-black uppercase tracking-widest text-[11px]`}
+                >
+                  Recommendations
+                </button>
               </div>
             </div>
 
@@ -77,7 +102,15 @@ function App() {
         {/* --- MAIN CONTENT --- */}
         <main className="max-w-7xl mx-auto py-12">
           <Routes>
-            <Route path="/" element={<Policies />} />
+            <Route 
+              path="/" 
+              element={
+                <Policies 
+                  showRecommendations={showRecommendations} 
+                  setShowRecommendations={setShowRecommendations} 
+                />
+              } 
+            />
             <Route path="/policies" element={<Policies />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
