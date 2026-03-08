@@ -3,10 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import List
+from datetime import datetime
 
-from database import get_db, User, Provider, Policy, init_db
-from models import UserCreate, UserResponse, UserLogin, Token, PolicyResponse, ProviderResponse
+from database import get_db, User, Provider, Policy, init_db, UserPreference, Recommendation, Claim
+from models import UserCreate, UserResponse, UserLogin, Token, PolicyResponse, ProviderResponse, UserPreferenceCreate, UserPreferenceResponse, RecommendationResponse, ClaimCreate, ClaimResponse, ClaimUpdate
 from auth import get_password_hash, authenticate_user, create_access_token, get_current_user
+from recommendation_engine import generate_recommendations
 
 # Initialize FastAPI app
 app = FastAPI(title="Insurance Comparison API")
@@ -14,7 +16,7 @@ app = FastAPI(title="Insurance Comparison API")
 # CORS Configuration (allows frontend to connect)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # React default port
+    allow_origins=["http://localhost:3000", "http://localhost:3001"],  # React default ports
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -116,6 +118,168 @@ def get_policy(policy_id: int, db: Session = Depends(get_db)):
 def get_policies_by_type(policy_type: str, db: Session = Depends(get_db)):
     policies = db.query(Policy).filter(Policy.type == policy_type).all()
     return policies
+
+# ==================== PREFERENCES ENDPOINTS ====================
+
+@app.post("/preferences", response_model=UserPreferenceResponse)
+def create_or_update_preferences(
+    preferences: UserPreferenceCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # Check if preferences already exist
+    existing = db.query(UserPreference).filter(UserPreference.user_id == current_user.id).first()
+    
+    if existing:
+        # Update existing preferences
+        existing.age = preferences.age
+        existing.annual_income = preferences.annual_income
+        existing.family_size = preferences.family_size
+        existing.health_status = preferences.health_status
+        existing.preferred_coverage = preferences.preferred_coverage
+        existing.max_monthly_budget = preferences.max_monthly_budget
+        existing.risk_tolerance = preferences.risk_tolerance
+        existing.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(existing)
+        return existing
+    else:
+        # Create new preferences
+        new_pref = UserPreference(
+            user_id=current_user.id,
+            age=preferences.age,
+            annual_income=preferences.annual_income,
+            family_size=preferences.family_size,
+            health_status=preferences.health_status,
+            preferred_coverage=preferences.preferred_coverage,
+            max_monthly_budget=preferences.max_monthly_budget,
+            risk_tolerance=preferences.risk_tolerance
+        )
+        db.add(new_pref)
+        db.commit()
+        db.refresh(new_pref)
+        return new_pref
+
+@app.get("/preferences", response_model=UserPreferenceResponse)
+def get_my_preferences(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    preferences = db.query(UserPreference).filter(UserPreference.user_id == current_user.id).first()
+    if not preferences:
+        raise HTTPException(status_code=404, detail="Preferences not found. Please set your preferences first.")
+    return preferences
+
+# ==================== RECOMMENDATIONS ENDPOINTS ====================
+
+@app.post("/recommendations/generate")
+def create_recommendations(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    result = generate_recommendations(current_user.id)
+    
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+    
+    return {
+        "message": f"Generated {result['count']} recommendations",
+        "count": result['count']
+    }
+
+@app.get("/recommendations", response_model=List[RecommendationResponse])
+def get_my_recommendations(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    recommendations = db.query(Recommendation).filter(
+        Recommendation.user_id == current_user.id
+    ).order_by(Recommendation.score.desc()).all()
+    
+    if not recommendations:
+        raise HTTPException(
+            status_code=404,
+            detail="No recommendations found. Please set your preferences and generate recommendations first."
+        )
+    
+    return recommendations
+
+# ==================== CLAIMS ENDPOINTS ====================
+
+@app.post("/claims", response_model=ClaimResponse, status_code=status.HTTP_201_CREATED)
+def file_claim(
+    claim: ClaimCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # Verify policy exists
+    policy = db.query(Policy).filter(Policy.id == claim.policy_id).first()
+    if not policy:
+        raise HTTPException(status_code=404, detail="Policy not found")
+    
+    # Create new claim
+    new_claim = Claim(
+        user_id=current_user.id,
+        policy_id=claim.policy_id,
+        claim_type=claim.claim_type,
+        claim_amount=claim.claim_amount,
+        description=claim.description,
+        documents=claim.documents,
+        status="pending"
+    )
+    db.add(new_claim)
+    db.commit()
+    db.refresh(new_claim)
+    return new_claim
+
+@app.get("/claims", response_model=List[ClaimResponse])
+def get_my_claims(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    claims = db.query(Claim).filter(
+        Claim.user_id == current_user.id
+    ).order_by(Claim.filed_date.desc()).all()
+    
+    return claims
+
+@app.get("/claims/{claim_id}", response_model=ClaimResponse)
+def get_claim(
+    claim_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    claim = db.query(Claim).filter(
+        Claim.id == claim_id,
+        Claim.user_id == current_user.id
+    ).first()
+    
+    if not claim:
+        raise HTTPException(status_code=404, detail="Claim not found")
+    
+    return claim
+
+@app.put("/claims/{claim_id}/status", response_model=ClaimResponse)
+def update_claim_status(
+    claim_id: int,
+    claim_update: ClaimUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    claim = db.query(Claim).filter(Claim.id == claim_id).first()
+    
+    if not claim:
+        raise HTTPException(status_code=404, detail="Claim not found")
+    
+    # Update status and admin notes
+    claim.status = claim_update.status
+    if claim_update.admin_notes:
+        claim.admin_notes = claim_update.admin_notes
+    claim.updated_date = datetime.utcnow()
+    
+    db.commit()
+    db.refresh(claim)
+    return claim
 
 # Health check
 @app.get("/health")

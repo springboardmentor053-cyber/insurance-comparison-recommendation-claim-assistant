@@ -54,3 +54,64 @@ class PolicyResponse(PolicyBase):
     provider: ProviderResponse
     
     model_config = ConfigDict(from_attributes=True)
+
+# User Preference Models
+class UserPreferenceBase(BaseModel):
+    age: int
+    annual_income: float
+    family_size: int = 1
+    health_status: str  # excellent, good, fair, poor
+    preferred_coverage: float
+    max_monthly_budget: float
+    risk_tolerance: str = "medium"  # low, medium, high
+
+class UserPreferenceCreate(UserPreferenceBase):
+    pass
+
+class UserPreferenceResponse(UserPreferenceBase):
+    id: int
+    user_id: int
+    created_at: datetime
+    updated_at: datetime
+    
+    model_config = ConfigDict(from_attributes=True)
+
+# Recommendation Models
+class RecommendationBase(BaseModel):
+    policy_id: int
+    score: float
+    reason: str
+
+class RecommendationResponse(RecommendationBase):
+    id: int
+    user_id: int
+    policy: PolicyResponse
+    created_at: datetime
+    
+    model_config = ConfigDict(from_attributes=True)
+
+# Claim Models
+class ClaimBase(BaseModel):
+    policy_id: int
+    claim_type: str  # accident, illness, property_damage, other
+    claim_amount: float
+    description: str
+
+class ClaimCreate(ClaimBase):
+    documents: Optional[str] = None
+
+class ClaimUpdate(BaseModel):
+    status: str  # pending, under_review, approved, rejected
+    admin_notes: Optional[str] = None
+
+class ClaimResponse(ClaimBase):
+    id: int
+    user_id: int
+    status: str
+    documents: Optional[str] = None
+    filed_date: datetime
+    updated_date: datetime
+    admin_notes: Optional[str] = None
+    policy: PolicyResponse
+    
+    model_config = ConfigDict(from_attributes=True)

@@ -23,6 +23,8 @@ class User(Base):
     hashed_password = Column(String)
     phone = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    
+    preferences = relationship("UserPreference", back_populates="user", uselist=False)
 
 class Provider(Base):
     __tablename__ = "providers"
@@ -47,6 +49,54 @@ class Policy(Base):
     description = Column(Text, nullable=True)
     
     provider = relationship("Provider", back_populates="policies")
+
+class UserPreference(Base):
+    __tablename__ = "user_preferences"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True)
+    age = Column(Integer)
+    annual_income = Column(Float)
+    family_size = Column(Integer, default=1)
+    health_status = Column(String)  # excellent, good, fair, poor
+    preferred_coverage = Column(Float)
+    max_monthly_budget = Column(Float)
+    risk_tolerance = Column(String, default="medium")  # low, medium, high
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    user = relationship("User", back_populates="preferences")
+
+class Recommendation(Base):
+    __tablename__ = "recommendations"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    policy_id = Column(Integer, ForeignKey("policies.id"))
+    score = Column(Float)  # 0-100 match score
+    reason = Column(Text)  # Why this policy is recommended
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User")
+    policy = relationship("Policy")
+
+class Claim(Base):
+    __tablename__ = "claims"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    policy_id = Column(Integer, ForeignKey("policies.id"))
+    claim_type = Column(String)  # accident, illness, property_damage, other
+    claim_amount = Column(Float)
+    description = Column(Text)
+    status = Column(String, default="pending")  # pending, under_review, approved, rejected
+    documents = Column(Text, nullable=True)  # JSON string of document filenames
+    filed_date = Column(DateTime, default=datetime.utcnow)
+    updated_date = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    admin_notes = Column(Text, nullable=True)
+    
+    user = relationship("User")
+    policy = relationship("Policy")
 
 def get_db():
     db = SessionLocal()
