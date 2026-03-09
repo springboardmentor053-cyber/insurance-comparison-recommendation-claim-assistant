@@ -1,113 +1,192 @@
 
-# Insurance Comparison & Recommendation System
+# Insurance Comparison, Recommendation & Claim Assistant
 
-A full-stack web application built with **FastAPI (Backend)** and **React (Frontend)** to compare insurance policies and provide recommendations based on user risk profiles.
+A full-stack web application built with **FastAPI (Backend)** and **React (Frontend)** to compare insurance policies and provide AI-powered personalized recommendations based on user risk profiles.
 
 ## 🚀 Features
 - **User Authentication**: Secure Login/Signup with JWT.
 - **Dynamic Policy Catalog**: Browse Health, Auto, Home, Life, and Travel policies.
-- **Policy Comparison**: Compare up to 3 policies side-by-side with "Best Value" highlighting.
+- **Policy Comparison**: Compare up to 3 policies side-by-side with "Best Match for You" highlighting.
+- **AI Recommendation Engine**: Personalized policy recommendations based on 12+ risk factors.
+- **Risk Profile Management**: Fill in lifestyle, financial, and health details for better matches.
 - **Premium Calculator**: Estimate premiums based on age and coverage amount.
-- **Admin Dashboard**: Manage users and policies (Backend API).
+- **Precomputed Recommendations**: Fast retrieval using cached recommendation results.
 
 ---
 
-## 🛠️ Prerequisites
-Ensure you have the following installed on your system:
-1.  **Python 3.8+** (for the backend)
-2.  **Node.js 16+** (for the frontend)
-3.  **Git** (to clone the repository)
+## 🖥️ Step 1 — Install Required Software
+
+### 1.1 Git
+- Download from: **https://git-scm.com/downloads**
+- Install with default options
+- Verify: open Command Prompt → type `git --version`
+
+### 1.2 Python (3.10 or higher)
+- Download from: **https://www.python.org/downloads**
+- ⚠️ During install → check **"Add Python to PATH"**
+- Verify: `python --version`
+
+### 1.3 Node.js (v18 or higher)
+- Download from: **https://nodejs.org** → choose **LTS version**
+- Verify: `node --version` and `npm --version`
+
+### 1.4 PostgreSQL
+- Download from: **https://www.postgresql.org/download/**
+- During install, set a password for the `postgres` user — **remember this password**
+- Default port: `5432`
+- After install, open **pgAdmin** (comes with PostgreSQL) and create a new database:
+  - Right-click **Databases** → **Create** → **Database**
+  - Name it: `insurance_db`
 
 ---
 
-## ⚙️ How to Run the Project
+## 📥 Step 2 — Clone the Repository
 
-### 1. Clone the Repository
-```bash
-git clone <repository_url>
-cd Insurance_Comparison_Recommendation
+Open Command Prompt or PowerShell:
+
+```powershell
+git clone https://github.com/springboardmentor053-cyber/Insurance-Comparison-Recommendation-Claim-Assistant.git
 ```
 
-### 2. Backend Setup (FastAPI)
-Navigate to the backend folder and set up the Python environment.
+```powershell
+cd Insurance-Comparison-Recommendation-Claim-Assistant
+```
 
-```bash
-# 1. Navigate to backend
+---
+
+## ⚙️ Step 3 — Backend Setup
+
+### 3.1 Go into backend folder
+```powershell
 cd backend
+```
 
-# 2. Create a virtual environment
+### 3.2 Create a virtual environment
+```powershell
 python -m venv venv
+```
 
-# 3. Activate the virtual environment
-# Windows:
+### 3.3 Activate the virtual environment
+
+**Windows:**
+```powershell
 venv\Scripts\activate
-# Mac/Linux:
-# source venv/bin/activate
+```
 
-# 4. Install dependencies
+**Mac/Linux:**
+```bash
+source venv/bin/activate
+```
+
+You should see `(venv)` at the start of the terminal line.
+
+### 3.4 Install Python dependencies
+```powershell
 pip install -r requirements.txt
+```
 
-# 5. Initialize the Database & Seed Data
-# This will create the SQLite database and add sample policies/users.
-# Note: Ensure you are in the 'backend' folder
+### 3.5 Create the `.env` file
+
+Inside the `backend/` folder, create a new file called **`.env`** and paste this:
+
+```
+DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/insurance_db
+SECRET_KEY=your-secret-key-change-this
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+CORS_ORIGIN=http://localhost:5173
+```
+
+> Replace `YOUR_PASSWORD` with the PostgreSQL password you set during install.
+
+### 3.6 Create the database tables
+```powershell
+python ../database/create_tables.py
+```
+
+### 3.7 Seed the database with sample data
+```powershell
 python seed.py
+```
 
-# 6. Run the Backend Server
-# The server will start at http://localhost:8000
+### 3.8 Start the backend server
+```powershell
 uvicorn app.main:app --reload
 ```
-**Backend URLs:**
-*   API Docs: [http://localhost:8000/docs](http://localhost:8000/docs)
-*   API ReDoc: [http://localhost:8000/redoc](http://localhost:8000/redoc)
+
+✅ Backend runs at: **http://localhost:8000**
+✅ API docs at: **http://localhost:8000/docs**
 
 ---
 
-### 3. Frontend Setup (React + Vite)
-Open a **new terminal** (keep the backend running) and navigate to the frontend folder.
+## 🎨 Step 4 — Frontend Setup
 
-```bash
-# 1. Navigate to frontend
-cd frontend
+Open a **new terminal window** (keep backend running):
 
-# 2. Install Node modules
+```powershell
+cd Insurance-Comparison-Recommendation-Claim-Assistant\frontend
+```
+
+### 4.1 Install Node dependencies
+```powershell
 npm install
+```
 
-# 3. Start the Development Server
+### 4.2 Start the frontend
+```powershell
 npm run dev
 ```
-**Frontend URL:**
-*   App: [http://localhost:5173](http://localhost:5173)
+
+✅ Frontend runs at: **http://localhost:5173**
 
 ---
 
-## 🧪 Testing the App
+## 🚀 Step 5 — Open and Use the App
 
-1.  **Register:** Go to `http://localhost:5173/signup` and create a new account.
-2.  **Login:** Log in with your new credentials.
-3.  **Dashboard:** You will see a list of recommended policies.
-4.  **Compare:** Select 2 or 3 policies of the same type and click **Compare**.
-    *   *Look for the "Best Value" badge!*
-5.  **Calculator:** Try the Premium Calculator to see dynamic pricing.
+1. Open browser → go to **http://localhost:5173**
+2. **Login** with seeded credentials:
+   - Email: `user@example.com` | Password: `password`
+   - Admin: `admin@example.com` | Password: `password`
+3. OR click **Sign Up** to create a new account
+
+---
+
+## 📋 Quick Reference
+
+| What | Command | Where to Run |
+|---|---|---|
+| Activate venv | `venv\Scripts\activate` | `backend/` |
+| Start backend | `uvicorn app.main:app --reload` | `backend/` |
+| Start frontend | `npm run dev` | `frontend/` |
+| API docs | Open `http://localhost:8000/docs` | Browser |
+| App | Open `http://localhost:5173` | Browser |
+
+> ⚠️ **Both terminals must stay open** — one for backend, one for frontend.
 
 ---
 
 ## 📂 Project Structure
 
 ```
-Active_Insurance_Comparison/
+Insurance-Comparison-Recommendation-Claim-Assistant/
 ├── backend/                # FastAPI Application
 │   ├── app/
 │   │   ├── main.py         # App Entry Point
-│   │   ├── models/         # Database Models
+│   │   ├── models/         # Database Models (User, Policy, Recommendation)
 │   │   ├── schemas/        # Pydantic Schemas
+│   │   ├── crud/           # Database Operations
+│   │   ├── services/       # Recommendation Engine
 │   │   └── api/            # API Routes
-│   ├── requirements.txt    # Python Dependencies
-│   └── seed.py             # Data Seeding Script
+│   ├── seed.py             # Sample Data Seeding Script
+│   └── requirements.txt    # Python Dependencies
+│
+├── database/               # Database Utility Scripts
+│   └── create_tables.py    # Table Creation Script
 │
 └── frontend/               # React Application
     ├── src/
-    │   ├── components/     # Reusable UI Components
-    │   ├── context/        # Auth Context
-    │   └── App.jsx         # Main App Component
+    │   ├── components/     # UI Components (Dashboard, Compare, Profile...)
+    │   ├── context/        # Auth Context (JWT Token Management)
+    │   └── App.jsx         # Main App with Routing
     └── package.json        # Node Dependencies
 ```
