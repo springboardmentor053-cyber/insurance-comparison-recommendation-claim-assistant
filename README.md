@@ -45,7 +45,7 @@ A full-stack web application built with **FastAPI (Backend)** and **React (Front
 Open Command Prompt or PowerShell:
 
 ```powershell
-git clone https://github.com/springboardmentor053-cyber/Insurance-Comparison-Recommendation-Claim-Assistant.git
+git clone -b teamc_charan https://github.com/springboardmentor053-cyber/Insurance-Comparison-Recommendation-Claim-Assistant.git
 ```
 
 ```powershell
