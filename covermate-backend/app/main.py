@@ -6,6 +6,7 @@ from app.models import recommendation
 from app.models.provider import Provider
 from app.models.policy import Policy, PolicyType
 from app.routers import auth, policy, recommendation
+from app.routers import user_policies
 
 
 app = FastAPI()
@@ -24,6 +25,7 @@ Base.metadata.create_all(bind=engine)
 app.include_router(auth.router)
 app.include_router(policy.router)
 app.include_router(recommendation.router)
+app.include_router(user_policies.router)
 
 @app.get("/")
 def root():

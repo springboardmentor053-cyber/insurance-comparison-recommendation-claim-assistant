@@ -441,7 +441,6 @@ if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
 }
 return age;
 
-
 };
 
 // FETCH USER PROFILE
@@ -503,36 +502,23 @@ try {
       }
     }
   );
-
-  // localStorage.setItem("recommendations", JSON.stringify(res.data));
   
-  // navigate("/recommendations");
+  localStorage.setItem("recommendations", JSON.stringify(res.data));
+  
   navigate("/recommendations", { state: { policies: res.data } });
-
-//   if (!res.data || res.data.length === 0) {
-//   alert("No policies matched your criteria.");
-//   return;
-// }
-
-//   navigate("/recommendations", { state: { policies: res.data } });
 
 } catch (error) {
 
   console.error("Recommendation error:", error);
   alert("Failed to generate recommendations");
 
-}
-
-
-};
+}};
 
 if (loading || !profile) {
 return <div>Loading profile...</div>;
 }
 
 return (
-
-
 <div
   style={{
     minHeight: "100vh",
@@ -542,7 +528,6 @@ return (
     alignItems: "center"
   }}
 >
-
   <div
     style={{
       background: "#fff",
@@ -554,9 +539,8 @@ return (
   >
 
     <h2 style={{ textAlign: "center", marginBottom: "20px" }}>
-      Insurance Recommendation Setup
+      Insurance Recommendation
     </h2>
-
 
     {/* USER SUMMARY */}
 
@@ -568,7 +552,6 @@ return (
         marginBottom: "20px"
       }}
     >
-
       <h4>User Summary</h4>
 
       <p><b>Name:</b> {profile.name}</p>
@@ -577,7 +560,6 @@ return (
       <p><b>Risk Profile:</b> {profile.risk_profile}</p>
 
     </div>
-
 
     {/* FORM */}
 
@@ -597,7 +579,6 @@ return (
           marginBottom: "20px"
         }}
       >
-
         <option value="">Select</option>
         <option value="1">1</option>
         <option value="2">2</option>
@@ -605,7 +586,6 @@ return (
         <option value="4">4+</option>
 
       </select>
-
 
       {/* BUDGET SLIDER */}
 
@@ -624,7 +604,6 @@ return (
         }}
       />
 
-
       {/* HEALTH STATUS */}
 
       <label>Health Status</label>
@@ -639,14 +618,12 @@ return (
           marginBottom: "20px"
         }}
       >
-
         <option value="">Select</option>
         <option value="good">Good</option>
         <option value="average">Average</option>
         <option value="critical">Critical</option>
 
       </select>
-
 
       <button
         type="submit"
@@ -661,9 +638,7 @@ return (
           fontSize: "16px"
         }}
       >
-
         Get Recommendations
-
       </button>
 
     </form>

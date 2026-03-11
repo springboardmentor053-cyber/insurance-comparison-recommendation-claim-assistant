@@ -4,6 +4,26 @@ import "../styles/Home.css";
 function Home() {
   const navigate = useNavigate();
 
+  const handleRecommendationClick = () => {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    alert("Please login first to get recommendations");
+    navigate("/login");
+    return;
+  }
+
+  // navigate("/recommendation-setup");
+
+  const savedRecommendations = localStorage.getItem("recommendations");
+
+  if (savedRecommendations) {
+    navigate("/recommendations");
+  } else {
+    navigate("/recommendation-setup");
+  }
+};
+
   return (
     <div className="home-container">
       
@@ -18,9 +38,14 @@ and make smarter financial decisions.
           <button onClick={() => navigate("/policies")}>
             Browse Policies
           </button>
-          <button onClick={() => navigate("/recommendations")}>
+
+          <button onClick={handleRecommendationClick}>
+      Get Recommendations
+    </button>
+
+          {/* <button onClick={() => navigate("/recommendations")}>
             Get Recommendations
-          </button>
+          </button> */}
         </div>
       </div>
 
