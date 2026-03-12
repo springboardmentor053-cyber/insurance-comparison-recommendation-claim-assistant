@@ -69,6 +69,15 @@ def calculate_policy_score(user_pref: UserPreference, policy: Policy) -> tuple:
         if "premium" in policy.name.lower() or policy.coverage_amount > 150000:
             score += 5
             reasons.append("Comprehensive coverage for health concerns")
+
+    # Factor 6: Vehicle Type Match
+    if policy.type == "auto" and user_pref.vehicle_type:
+        if user_pref.vehicle_type == "premium" and "comprehensive" in policy.name.lower():
+            score += 20
+            reasons.append("Best comprehensive coverage for premium vehicles")
+        elif user_pref.vehicle_type == "basic" and policy.premium_monthly < 50:
+            score += 20
+            reasons.append("Affordable coverage for basic daily commute vehicles")
     
     # Ensure score doesn't exceed 100
     score = min(score, 100)

@@ -6,8 +6,8 @@ from typing import List
 from datetime import datetime
 
 from database import get_db, User, Provider, Policy, init_db, UserPreference, Recommendation, Claim
-from models import UserCreate, UserResponse, UserLogin, Token, PolicyResponse, ProviderResponse, UserPreferenceCreate, UserPreferenceResponse, RecommendationResponse, ClaimCreate, ClaimResponse, ClaimUpdate
-from auth import get_password_hash, authenticate_user, create_access_token, get_current_user
+from models import UserCreate, UserResponse, UserLogin, Token, PolicyCreate, PolicyResponse, ProviderResponse, UserPreferenceCreate, UserPreferenceResponse, RecommendationResponse, ClaimCreate, ClaimResponse, ClaimUpdate
+from auth import get_password_hash, authenticate_user, create_access_token, get_current_user, get_current_admin_user
 from recommendation_engine import generate_recommendations
 
 # Initialize FastAPI app
@@ -16,7 +16,14 @@ app = FastAPI(title="Insurance Comparison API")
 # CORS Configuration (allows frontend to connect)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001"],  # React default ports
+    allow_origins=[
+        "http://localhost:3000", 
+        "http://localhost:3001",
+        "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+        "http://127.0.0.1:5173"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -26,7 +33,7 @@ app.add_middleware(
 @app.on_event("startup")
 def startup_event():
     init_db()
-    print("✅ Database initialized!")
+    print("Database initialized!")
 
 # Root endpoint
 @app.get("/")
@@ -119,6 +126,49 @@ def get_policies_by_type(policy_type: str, db: Session = Depends(get_db)):
     policies = db.query(Policy).filter(Policy.type == policy_type).all()
     return policies
 
+# ==================== ADMIN ENDPOINTS ====================
+
+@app.post("/admin/policies", response_model=PolicyResponse, status_code=status.HTTP_201_CREATED)
+def admin_create_policy(
+    policy: PolicyCreate,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    new_policy = Policy(
+        provider_id=policy.provider_id,
+        name=policy.name,
+        type=policy.type,
+        coverage_amount=policy.coverage_amount,
+        premium_monthly=policy.premium_monthly,
+        deductible=policy.deductible,
+        description=policy.description
+    )
+    db.add(new_policy)
+    db.commit()
+    db.refresh(new_policy)
+    return new_policy
+
+@app.delete("/admin/policies/{policy_id}", status_code=status.HTTP_204_NO_CONTENT)
+def admin_delete_policy(
+    policy_id: int,
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    policy = db.query(Policy).filter(Policy.id == policy_id).first()
+    if not policy:
+        raise HTTPException(status_code=404, detail="Policy not found")
+    db.delete(policy)
+    db.commit()
+    return {"ok": True}
+
+@app.get("/admin/users", response_model=List[UserResponse])
+def admin_get_users(
+    admin_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    users = db.query(User).all()
+    return users
+
 # ==================== PREFERENCES ENDPOINTS ====================
 
 @app.post("/preferences", response_model=UserPreferenceResponse)
@@ -136,6 +186,7 @@ def create_or_update_preferences(
         existing.annual_income = preferences.annual_income
         existing.family_size = preferences.family_size
         existing.health_status = preferences.health_status
+        existing.vehicle_type = preferences.vehicle_type
         existing.preferred_coverage = preferences.preferred_coverage
         existing.max_monthly_budget = preferences.max_monthly_budget
         existing.risk_tolerance = preferences.risk_tolerance
@@ -151,6 +202,7 @@ def create_or_update_preferences(
             annual_income=preferences.annual_income,
             family_size=preferences.family_size,
             health_status=preferences.health_status,
+            vehicle_type=preferences.vehicle_type,
             preferred_coverage=preferences.preferred_coverage,
             max_monthly_budget=preferences.max_monthly_budget,
             risk_tolerance=preferences.risk_tolerance
@@ -280,6 +332,33 @@ def update_claim_status(
     db.commit()
     db.refresh(claim)
     return claim
+
+# ==================== CHATBOT ENDPOINTS ====================
+from pydantic import BaseModel
+
+class ChatMessage(BaseModel):
+    message: str
+
+@app.post("/chatbot/ask")
+def ask_chatbot(
+    chat: ChatMessage,
+    current_user: User = Depends(get_current_user)
+):
+    user_msg = chat.message.lower()
+    
+    # Simple rule-based chatbot for claims
+    if "how to file" in user_msg or "steps" in user_msg:
+        reply = "To file a claim, go to your Dashboard, navigate to the Claims section, select 'File New Claim', choose the affected policy, and describe the incident along with uploading relevant photos or documents."
+    elif "documents" in user_msg or "need" in user_msg:
+        reply = "Common documents needed for claims include: 1) A filled claim form, 2) ID Proof, 3) Policy Document copy, 4) Proof of loss (photos/repair estimates for vehicles, medical bills for health)."
+    elif "rejected" in user_msg or "denied" in user_msg:
+        reply = "Claims are commonly rejected due to: 1) Waiting periods not being over, 2) Out-of-network hospitals (health), 3) Unreported modifications (auto), 4) Pre-existing conditions exclusions, 5) Missed premium payments."
+    elif "status" in user_msg:
+        reply = "You can view your claim status in the 'Claims' tab of your dashboard. Statuses range from 'pending', 'under_review', 'approved', to 'rejected'."
+    else:
+        reply = "I'm the Claims Assistant. You can ask me about how to file a claim, what documents are required, how to check your status, or common reasons for claim rejection."
+        
+    return {"reply": reply}
 
 # Health check
 @app.get("/health")

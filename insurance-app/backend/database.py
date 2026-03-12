@@ -22,6 +22,7 @@ class User(Base):
     full_name = Column(String)
     hashed_password = Column(String)
     phone = Column(String, nullable=True)
+    is_admin = Column(Integer, default=0) # using Integer as SQLite boolean
     created_at = Column(DateTime, default=datetime.utcnow)
     
     preferences = relationship("UserPreference", back_populates="user", uselist=False)
@@ -59,6 +60,7 @@ class UserPreference(Base):
     annual_income = Column(Float)
     family_size = Column(Integer, default=1)
     health_status = Column(String)  # excellent, good, fair, poor
+    vehicle_type = Column(String, nullable=True) # basic, premium, none
     preferred_coverage = Column(Float)
     max_monthly_budget = Column(Float)
     risk_tolerance = Column(String, default="medium")  # low, medium, high
