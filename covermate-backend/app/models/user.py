@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, DateTime
+from sqlalchemy import Column, Integer, String, Date, DateTime, Boolean
 from sqlalchemy.dialects.postgresql import JSONB
 from datetime import datetime
 from app.database import Base
@@ -15,7 +15,8 @@ class User(Base):
     occupation = Column(String)
     annual_income = Column(Integer)
     phone = Column(String)
-    risk_profile = Column(String)  
+    risk_profile = Column(String)
+    is_admin = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     
 

@@ -11,6 +11,8 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
+
+# ── Register ───────────────────────────────────────────────────
 @router.post("/register")
 def register(user: UserCreate, db: Session = Depends(get_db)):
 
@@ -18,7 +20,6 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    # Auto risk calculation
     if user.annual_income and int(user.annual_income) > 800000:
         calculated_risk = "Low"
     elif user.annual_income and int(user.annual_income) > 400000:
@@ -45,12 +46,13 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     return {"message": "User registered successfully"}
 
 
+# ── Regular user login ─────────────────────────────────────────
+# Blocks admin users from logging in here
 @router.post("/login")
 def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
-
     user = db.query(User).filter(User.email == form_data.username).first()
 
     if not user:
@@ -59,9 +61,14 @@ def login(
     if not verify_password(form_data.password, user.password):
         raise HTTPException(status_code=400, detail="Invalid password")
 
-    access_token = create_access_token(
-        data={"sub": user.email}
-    )
+    # ✅ Block admin from using regular login
+    if user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Admin accounts must use the Admin Portal to login"
+        )
+
+    access_token = create_access_token(data={"sub": user.email})
 
     return {
         "access_token": access_token,
@@ -69,12 +76,43 @@ def login(
     }
 
 
+# ── Admin login ────────────────────────────────────────────────
+# Only allows users with is_admin = True
+@router.post("/admin-login")
+def admin_login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.email == form_data.username).first()
+
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid email")
+
+    if not verify_password(form_data.password, user.password):
+        raise HTTPException(status_code=400, detail="Invalid password")
+
+    # ✅ Only admin users allowed here
+    if not user.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied. This portal is for administrators only."
+        )
+
+    access_token = create_access_token(data={"sub": user.email})
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "is_admin": True
+    }
+
+
+# ── Get current user ───────────────────────────────────────────
 @router.get("/me")
 def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ):
-
     payload = decode_access_token(token)
     email = payload.get("sub")
 
