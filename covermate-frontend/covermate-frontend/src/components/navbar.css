@@ -1,39 +1,89 @@
-.logo {
-  font-size: 20px;
-  font-weight: bold;
-}
-
-.nav-links a:hover {
-  text-decoration: underline;
-}
-
-
 .navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 40px;
-  background: #007bff;
+  padding: 0 40px;
+  height: 62px;
+  background: #1a73e8;
   color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  transition: background 0.3s ease;
 }
 
-.nav-links a {
-  margin-left: 20px;
+/* ── Admin navbar — dark theme ── */
+.navbar-admin {
+  background: #1e293b;
+}
+
+/* ── Logo ── */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
   color: white;
   text-decoration: none;
 }
 
-.logout-btn {
-  background: #ff4d4d;
-  border: none;
+.logo-icon {
+  width: 30px;
+  height: 30px;
+  background: white;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.logo-accent {
+  color: #a8d4ff;
+}
+
+/* ── Nav links ── */
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nav-links a {
+  color: rgba(255, 255, 255, 0.88);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 7px 12px;
+  border-radius: 8px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.nav-links a:hover {
+  background: rgba(255, 255, 255, 0.15);
   color: white;
-  padding: 6px 12px;
-  border-radius: 6px;
+  text-decoration: none;
+}
+
+/* ── Logout button ── */
+.logout-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 7px 14px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
-  margin-left: 10px;
+  font-weight: 500;
+  margin-left: 6px;
+  transition: all 0.2s ease;
 }
 
 .logout-btn:hover {
-  background: #ff1a1a;
+  background: rgba(220, 38, 38, 0.85);
+  border-color: transparent;
 }

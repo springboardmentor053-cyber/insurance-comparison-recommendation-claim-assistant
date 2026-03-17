@@ -1,4 +1,4 @@
-/* Full page center */
+/* ── Full page center ── */
 .auth-wrapper {
   min-height: calc(100vh - 60px);
   display: flex;
@@ -8,7 +8,7 @@
   padding: 40px 20px;
 }
 
-/* Card */
+/* ── Card ── */
 .auth-card {
   background: white;
   border-radius: 18px;
@@ -18,24 +18,49 @@
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
 }
 
-/* Title */
+/* ── Title ── */
 .auth-title {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   font-weight: 600;
   font-size: 24px;
+  color: #1e293b;
 }
 
-/* Form layout */
+/* ── Inline error / success banners ── */
+.auth-error {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.auth-success {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+/* ── Form layout ── */
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .form-row {
   display: flex;
-  gap: 18px;
+  gap: 14px;
+  align-items: flex-end;
 }
 
 .form-row input,
@@ -47,6 +72,12 @@
   background: #f8fafc;
   font-size: 14px;
   transition: 0.2s ease;
+  height: 46px;
+  box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
+  min-width: 0;
+  width: 100%;
 }
 
 .form-row input:focus,
@@ -54,16 +85,68 @@
   outline: none;
   border-color: #4c6ef5;
   background: white;
+  box-shadow: 0 0 0 3px rgba(76, 110, 245, 0.1);
 }
 
-/* Single full width row */
+/* ── Single full width row ── */
 .form-row.single input {
   width: 100%;
 }
 
-/* Register Button */
+/* ── Password row with toggle ── */
+.password-row {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.password-row input {
+  flex: 1;
+  padding-right: 56px !important;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #4c6ef5;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+.toggle-password:hover {
+  background: #eef2ff;
+}
+
+/* ── Input label (for date of birth field) ── */
+.input-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.input-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding-left: 2px;
+}
+
+.input-group input {
+  width: 100%;
+}
+
+/* ── Submit button ── */
 .auth-button {
-  margin-top: 15px;
+  margin-top: 6px;
   padding: 14px;
   border: none;
   border-radius: 12px;
@@ -74,23 +157,47 @@
   cursor: pointer;
   transition: all 0.3s ease;
   letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
 }
 
-.auth-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 25px rgba(76, 110, 245, 0.45);
+.auth-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(76, 110, 245, 0.4);
 }
 
-.auth-button:active {
+.auth-button:active:not(:disabled) {
   transform: scale(0.98);
 }
 
+.auth-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
 
-/* Bottom login text */
+/* ── Loading spinner inside button ── */
+.btn-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Footer link ── */
 .auth-footer {
-  margin-top: 25px;
+  margin-top: 22px;
   text-align: center;
   font-size: 14px;
+  color: #64748b;
 }
 
 .auth-footer a {
@@ -103,35 +210,54 @@
   text-decoration: underline;
 }
 
-/* Profile */
+
+/* ══════════════════════════════
+   PROFILE PAGE
+══════════════════════════════ */
 
 .profile-container {
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: flex-start;   
+  align-items: flex-start;
   background: linear-gradient(135deg, #2b6cb0, #4c6ef5);
-  padding: 40px 20px;        /* adjusted */
+  padding: 50px 20px;
   font-family: 'Segoe UI', sans-serif;
 }
 
 .profile-card {
   background: white;
   border-radius: 20px;
-  padding: 20px;
+  padding: 36px;
   width: 100%;
-  max-width: 550px;
+  max-width: 560px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+}
+
+/* ── Avatar initials circle ── */
+.profile-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2b6cb0, #4c6ef5);
+  color: white;
+  font-size: 26px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  letter-spacing: 1px;
 }
 
 .profile-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 28px;
 }
 
 .profile-header h2 {
-  font-size: 24px;
-  margin-bottom: 6px;
+  font-size: 22px;
+  margin-bottom: 4px;
   font-weight: 600;
   color: #2b6cb0;
 }
@@ -144,7 +270,7 @@
 .profile-details {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 10px;
 }
 
 .detail-row {
@@ -154,7 +280,7 @@
   padding: 12px 16px;
   border-radius: 12px;
   background: #f8fafc;
-  transition: 0.3s ease;
+  transition: 0.2s ease;
 }
 
 .detail-row:hover {
@@ -164,38 +290,52 @@
 .label {
   font-weight: 600;
   color: #333;
+  font-size: 14px;
 }
 
 .value {
   color: #555;
   font-weight: 500;
+  font-size: 14px;
 }
 
-/* Risk badges */
+/* ── Risk badges ── */
 .risk {
-  padding: 6px 12px;
+  padding: 5px 12px;
   border-radius: 20px;
   font-size: 13px;
   font-weight: 600;
 }
 
-.risk.low {
-  background: #e6fffa;
-  color: #0f766e;
+.risk.low  { background: #e6fffa; color: #0f766e; }
+.risk.medium { background: #fff7ed; color: #c2410c; }
+.risk.high { background: #fee2e2; color: #b91c1c; }
+
+/* ── Profile CTA button ── */
+.profile-btn {
+  display: block;
+  width: 100%;
+  margin-top: 24px;
+  padding: 13px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #2b6cb0, #4c6ef5);
+  color: white;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.risk.medium {
-  background: #fff7ed;
-  color: #c2410c;
+.profile-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(76, 110, 245, 0.35);
 }
 
-.risk.high {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-
+/* ── Loading text ── */
 .loading-text {
   text-align: center;
   margin-top: 80px;
   font-size: 16px;
+  color: #64748b;
 }
