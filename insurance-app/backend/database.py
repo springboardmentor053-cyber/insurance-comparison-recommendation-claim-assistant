@@ -84,19 +84,46 @@ class Claim(Base):
     __tablename__ = "claims"
     
     id = Column(Integer, primary_key=True, index=True)
+    claim_number = Column(String, unique=True, index=True)  # NEW: CLM-2026-0001
     user_id = Column(Integer, ForeignKey("users.id"))
     policy_id = Column(Integer, ForeignKey("policies.id"))
-    claim_type = Column(String)  # accident, illness, property_damage, other
+    claim_type = Column(String)
     claim_amount = Column(Float)
     description = Column(Text)
-    status = Column(String, default="pending")  # pending, under_review, approved, rejected
-    documents = Column(Text, nullable=True)  # JSON string of document filenames
+    status = Column(String, default="draft")  # CHANGED: draft instead of pending
     filed_date = Column(DateTime, default=datetime.utcnow)
+    submitted_date = Column(DateTime, nullable=True)  # NEW: when user submits
     updated_date = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     admin_notes = Column(Text, nullable=True)
     
     user = relationship("User")
     policy = relationship("Policy")
+
+class ClaimStatusHistory(Base):
+    __tablename__ = "claim_status_history"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    claim_id = Column(Integer, ForeignKey("claims.id"))
+    old_status = Column(String, nullable=True)
+    new_status = Column(String)
+    changed_by = Column(Integer, nullable=True)  # user_id who made the change
+    changed_at = Column(DateTime, default=datetime.utcnow)
+    notes = Column(Text, nullable=True)
+    
+    claim = relationship("Claim")
+
+class ClaimDocument(Base):
+    __tablename__ = "claim_documents"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    claim_id = Column(Integer, ForeignKey("claims.id"))
+    file_name = Column(String)
+    file_path = Column(String)  # Path where file is stored
+    file_type = Column(String)  # medical_bill, accident_photo, police_report, etc.
+    file_size = Column(Integer)  # Size in bytes
+    uploaded_at = Column(DateTime, default=datetime.utcnow)
+    
+    claim = relationship("Claim")
 
 def get_db():
     db = SessionLocal()

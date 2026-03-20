@@ -115,3 +115,40 @@ class ClaimResponse(ClaimBase):
     policy: PolicyResponse
     
     model_config = ConfigDict(from_attributes=True)
+
+    # Claim Status History Models
+class ClaimStatusHistoryResponse(BaseModel):
+    id: int
+    claim_id: int
+    old_status: Optional[str] = None
+    new_status: str
+    changed_at: datetime
+    notes: Optional[str] = None
+    
+    model_config = ConfigDict(from_attributes=True)
+
+# Claim Document Models
+class ClaimDocumentCreate(BaseModel):
+    file_type: str  # medical_bill, accident_photo, police_report, other
+    file_name: str
+
+class ClaimDocumentResponse(BaseModel):
+    id: int
+    claim_id: int
+    file_name: str
+    file_path: str
+    file_type: str
+    file_size: int
+    uploaded_at: datetime
+    
+    model_config = ConfigDict(from_attributes=True)
+
+# Admin Status Update Model
+class ClaimStatusUpdate(BaseModel):
+    status: str  # submitted, under_review, approved, rejected, paid
+    notes: Optional[str] = None
+
+# Update existing ClaimResponse to include claim_number
+class ClaimResponseWithHistory(ClaimResponse):
+    claim_number: Optional[str] = None
+    submitted_date: Optional[datetime] = None
