@@ -87,3 +87,16 @@ test_recommendations.py
 test_signup_api.py
 updates.txt
 test_recommendation_logic.py
+milestone3_claims_plan.md.resolved
+test_db_config.py
+
+# ─── Backend Secrets (NEVER push these) ───────
+backend/.env
+backend/check_config.py
+
+# ─── Alembic generated migration files ─────────
+backend/alembic/versions/
+
+# ─── Uploads / local files ─────────────────────
+uploads/
+*.DS_Store

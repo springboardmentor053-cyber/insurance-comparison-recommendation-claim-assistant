@@ -60,8 +60,8 @@ class RecommendationEngine:
         # ══════════════════════════════════════════════════════════════
         affordability_pts = Decimal(10)  # default if no income provided
         if income > 0:
-            monthly_income = income / 12
-            ratio = float(policy.premium / monthly_income)
+            # policy.premium is annual, income is annual. Ratio = premium / income
+            ratio = float(policy.premium / income)
             if ratio < 0.03:
                 affordability_pts = Decimal(25)
                 reasons.append(f"Highly affordable ({ratio*100:.1f}% of monthly income)")
@@ -184,28 +184,36 @@ class RecommendationEngine:
         # ══════════════════════════════════════════════════════════════
         coverage = policy.coverage or {}
         all_values = list(coverage.values())
-        bool_features = [v for v in all_values if isinstance(v, bool)]
-        num_features = len(bool_features)
+        # Only count features that are explicitly True
+        active_bool_features = [v for v in all_values if isinstance(v, bool) and v is True]
+        num_features = len(active_bool_features)
         max_numeric = max((float(v) for v in all_values if isinstance(v, (int, float)) and not isinstance(v, bool)), default=0)
 
-        is_comprehensive = num_features >= 3 or max_numeric >= 300000
-        is_basic = float(policy.premium) < 250 and num_features <= 1
+        is_comprehensive = num_features >= 3 or max_numeric >= 2000000
+        is_basic = float(policy.premium) < 6000 and num_features <= 2
+        is_medium = 6000 <= float(policy.premium) <= 16000
 
         if coverage_priority == "comprehensive" and is_comprehensive:
             score += 15
             reasons.append("Matches your preference for comprehensive coverage")
+        elif coverage_priority == "balanced" and is_medium:
+            score += 15
+            reasons.append("Matches preference for a balanced, medium-cost plan")
         elif coverage_priority == "cost_saving" and is_basic:
             score += 15
             reasons.append("Affordable plan matching your cost-saving goal")
         elif coverage_priority == "balanced":
             score += 10
-            reasons.append("Balanced coverage aligns with your preference")
+            reasons.append("Matches your core balanced preference")
         elif risk_appetite == "high" and is_comprehensive:
             score += 10
             reasons.append("Comprehensive plan suits your high risk appetite")
+        elif risk_appetite == "medium" and is_medium:
+            score += 10
+            reasons.append("Medium cost plan suits your moderate risk appetite")
         elif risk_appetite == "low" and is_basic:
             score += 10
-            reasons.append("Basic plan suits your low risk appetite")
+            reasons.append("Basic plan limits financial commitment")
         else:
             score += 5  # Partial match
 

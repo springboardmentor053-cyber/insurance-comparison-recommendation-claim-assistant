@@ -59,6 +59,54 @@ const Profile = () => {
     const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' });
     const [passwordLoading, setPasswordLoading] = useState(false);
 
+    // Basic Info Change State
+    const [isEditingPersonal, setIsEditingPersonal] = useState(false);
+    const [basicData, setBasicData] = useState({
+        name: user?.name || '',
+        dob: user?.dob ? user.dob.split('T')[0] : '',
+    });
+
+    React.useEffect(() => {
+        if (user) {
+            setBasicData({ 
+                name: user.name || '', 
+                dob: user.dob ? user.dob.split('T')[0] : '' 
+            });
+            setRiskProfile(buildInitialRiskProfile(user));
+        }
+    }, [user]);
+
+    const handleBasicChange = (e) => setBasicData({ ...basicData, [e.target.name]: e.target.value });
+
+    const handlePersonalSubmit = async (e) => {
+        e.preventDefault();
+        setProfileMessage({ type: '', text: '' });
+        setProfileLoading(true);
+        try {
+            const basicPayload = { ...basicData };
+            if (!basicPayload.dob) delete basicPayload.dob;
+            await client.put('/users/me/basic-info', basicPayload);
+
+            const rpPayload = { ...riskProfile };
+            if (rpPayload.annual_income !== '') rpPayload.annual_income = parseFloat(rpPayload.annual_income);
+            else delete rpPayload.annual_income;
+            if (rpPayload.family_size !== '') rpPayload.family_size = parseInt(rpPayload.family_size);
+            else delete rpPayload.family_size;
+            if (rpPayload.num_dependents !== '') rpPayload.num_dependents = parseInt(rpPayload.num_dependents);
+            else delete rpPayload.num_dependents;
+
+            await client.put('/users/me/profile', rpPayload);
+
+            await fetchUser();
+            setIsEditingPersonal(false);
+            setProfileMessage({ type: 'success', text: 'Personal details updated successfully!' });
+        } catch (err) {
+            setProfileMessage({ type: 'error', text: err.response?.data?.detail || 'Failed to update personal details.' });
+        } finally {
+            setProfileLoading(false);
+        }
+    };
+
     const handleRiskChange = (e) => {
         const { name, value, type, checked } = e.target;
         if (type === 'checkbox' && name === 'existing_conditions') {
@@ -191,30 +239,135 @@ const Profile = () => {
                 {/* ── PERSONAL INFO TAB ── */}
                 {activeTab === 'personal' && (
                     <div className="space-y-8 animate-fadeIn">
+                        {profileMessage.text && (
+                            <div className={`p-4 rounded-lg text-sm font-medium ${profileMessage.type === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'}`}>
+                                {profileMessage.text}
+                            </div>
+                        )}
                         <div>
-                            <h4 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Basic Details</h4>
-                            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
-                                <div><dt className="text-sm font-medium text-gray-500">Full Name</dt><dd className="mt-1 text-sm text-gray-900 font-semibold">{user.name || 'N/A'}</dd></div>
-                                <div><dt className="text-sm font-medium text-gray-500">Email Address</dt><dd className="mt-1 text-sm text-gray-900 font-semibold">{user.email}</dd></div>
-                                <div><dt className="text-sm font-medium text-gray-500">Date of Birth</dt><dd className="mt-1 text-sm text-gray-900 font-semibold">{formatDate(user.dob)}</dd></div>
-                                <div><dt className="text-sm font-medium text-gray-500">Gender</dt><dd className="mt-1 text-sm text-gray-900 font-semibold capitalize">{user.risk_profile?.gender || 'N/A'}</dd></div>
-                            </dl>
-                        </div>
-                        <div>
-                            <h4 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Employment & Financial</h4>
-                            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
-                                <div><dt className="text-sm font-medium text-gray-500">Occupation</dt><dd className="mt-1 text-sm text-gray-900 font-semibold">{user.risk_profile?.occupation || 'N/A'}</dd></div>
-                                <div><dt className="text-sm font-medium text-gray-500">Annual Income</dt><dd className="mt-1 text-sm text-gray-900 font-semibold">{user.risk_profile?.annual_income ? `$${Number(user.risk_profile.annual_income).toLocaleString()}` : 'N/A'}</dd></div>
-                                <div><dt className="text-sm font-medium text-gray-500">Marital Status</dt><dd className="mt-1 text-sm text-gray-900 font-semibold capitalize">{user.risk_profile?.marital_status || 'N/A'}</dd></div>
-                                <div><dt className="text-sm font-medium text-gray-500">Employment Type</dt><dd className="mt-1 text-sm text-gray-900 font-semibold capitalize">{user.risk_profile?.employment_type?.replace('_', ' ') || 'N/A'}</dd></div>
-                            </dl>
-                        </div>
-                        <div>
-                            <h4 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Contact Information</h4>
-                            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
-                                <div><dt className="text-sm font-medium text-gray-500">Phone Number</dt><dd className="mt-1 text-sm text-gray-900 font-semibold">{user.risk_profile?.phone_number || 'N/A'}</dd></div>
-                                <div><dt className="text-sm font-medium text-gray-500">Address</dt><dd className="mt-1 text-sm text-gray-900 font-semibold">{user.risk_profile?.address || 'N/A'}</dd></div>
-                            </dl>
+                            <div className="flex justify-between items-center mb-4 border-b pb-2">
+                                <h4 className="text-lg font-semibold text-gray-900">Personal Details</h4>
+                                <button
+                                    onClick={() => setIsEditingPersonal(!isEditingPersonal)}
+                                    className="text-gray-400 hover:text-indigo-600 transition p-1 bg-gray-50 rounded-md ring-1 ring-gray-200"
+                                    title="Edit Personal Details"
+                                >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            {isEditingPersonal ? (
+                                <form onSubmit={handlePersonalSubmit} className="space-y-6 bg-gray-50 p-6 rounded-xl border border-gray-200">
+                                    <h5 className="text-sm font-semibold text-gray-700">Basic Info</h5>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className={labelClass}>Full Name</label>
+                                            <input type="text" name="name" value={basicData.name} onChange={handleBasicChange} required className={inputClass} />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>Email Address</label>
+                                            <input type="email" value={user.email} disabled className={`${inputClass} bg-gray-200 text-gray-500 cursor-not-allowed`} title="Contact support to change email" />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>Date of Birth</label>
+                                            <input type="date" name="dob" value={basicData.dob} onChange={handleBasicChange} className={inputClass} max={new Date().toISOString().split('T')[0]} />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>Gender</label>
+                                            <select name="gender" value={riskProfile.gender} onChange={handleRiskChange} className={selectClass}>
+                                                <option value="">Select</option>
+                                                <option value="male">Male</option>
+                                                <option value="female">Female</option>
+                                                <option value="other">Other</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <h5 className="text-sm font-semibold text-gray-700 pt-4 border-t border-gray-200">Contact Information</h5>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className={labelClass}>Phone Number</label>
+                                            <input type="tel" name="phone_number" value={riskProfile.phone_number} onChange={handleRiskChange} className={inputClass} />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>Address</label>
+                                            <input type="text" name="address" value={riskProfile.address} onChange={handleRiskChange} className={inputClass} />
+                                        </div>
+                                    </div>
+
+                                    <h5 className="text-sm font-semibold text-gray-700 pt-4 border-t border-gray-200">Employment & Financial</h5>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className={labelClass}>Occupation</label>
+                                            <input type="text" name="occupation" value={riskProfile.occupation} onChange={handleRiskChange} className={inputClass} />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>Annual Income (₹)</label>
+                                            <input type="number" name="annual_income" value={riskProfile.annual_income} onChange={handleRiskChange} className={inputClass} />
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>Employment Type</label>
+                                            <select name="employment_type" value={riskProfile.employment_type} onChange={handleRiskChange} className={selectClass}>
+                                                <option value="">Select</option>
+                                                <option value="salaried">Salaried / Government</option>
+                                                <option value="self_employed">Self-Employed</option>
+                                                <option value="business_owner">Business Owner</option>
+                                                <option value="freelancer">Freelancer / Contractor</option>
+                                                <option value="retired">Retired</option>
+                                                <option value="student">Student</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className={labelClass}>Marital Status</label>
+                                            <select name="marital_status" value={riskProfile.marital_status} onChange={handleRiskChange} className={selectClass}>
+                                                <option value="">Select</option>
+                                                <option value="single">Single</option>
+                                                <option value="married">Married</option>
+                                                <option value="divorced">Divorced</option>
+                                                <option value="widowed">Widowed</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-end gap-2 pt-4">
+                                        <button type="button" onClick={() => setIsEditingPersonal(false)} className="bg-white border text-gray-700 px-4 py-2 text-sm font-medium rounded-md hover:bg-gray-50">
+                                            Cancel
+                                        </button>
+                                        <button type="submit" disabled={profileLoading} className="bg-indigo-600 text-white px-6 py-2 text-sm font-medium rounded-md hover:bg-indigo-700 shadow-sm">
+                                            {profileLoading ? 'Saving...' : 'Save All Changes'}
+                                        </button>
+                                    </div>
+                                </form>
+                            ) : (
+                                <div className="space-y-8">
+                                    <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
+                                        <div><dt className="text-sm font-medium text-gray-500">Full Name</dt><dd className="mt-1 text-sm text-gray-900 font-semibold">{user.name || 'N/A'}</dd></div>
+                                        <div><dt className="text-sm font-medium text-gray-500">Email Address</dt><dd className="mt-1 text-sm text-gray-900 font-semibold">{user.email}</dd></div>
+                                        <div><dt className="text-sm font-medium text-gray-500">Date of Birth</dt><dd className="mt-1 text-sm text-gray-900 font-semibold">{formatDate(user.dob)}</dd></div>
+                                        <div><dt className="text-sm font-medium text-gray-500">Gender</dt><dd className="mt-1 text-sm text-gray-900 font-semibold capitalize">{user.risk_profile?.gender || 'N/A'}</dd></div>
+                                    </dl>
+                                    
+                                    <div>
+                                        <h4 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Contact Information</h4>
+                                        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
+                                            <div><dt className="text-sm font-medium text-gray-500">Phone Number</dt><dd className="mt-1 text-sm text-gray-900 font-semibold">{user.risk_profile?.phone_number || 'N/A'}</dd></div>
+                                            <div><dt className="text-sm font-medium text-gray-500">Address</dt><dd className="mt-1 text-sm text-gray-900 font-semibold">{user.risk_profile?.address || 'N/A'}</dd></div>
+                                        </dl>
+                                    </div>
+
+                                    <div>
+                                        <h4 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Employment & Financial</h4>
+                                        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-6">
+                                            <div><dt className="text-sm font-medium text-gray-500">Occupation</dt><dd className="mt-1 text-sm text-gray-900 font-semibold">{user.risk_profile?.occupation || 'N/A'}</dd></div>
+                                            <div><dt className="text-sm font-medium text-gray-500">Annual Income</dt><dd className="mt-1 text-sm text-gray-900 font-semibold">{user.risk_profile?.annual_income ? `₹${Number(user.risk_profile.annual_income).toLocaleString()}` : 'N/A'}</dd></div>
+                                            <div><dt className="text-sm font-medium text-gray-500">Marital Status</dt><dd className="mt-1 text-sm text-gray-900 font-semibold capitalize">{user.risk_profile?.marital_status || 'N/A'}</dd></div>
+                                            <div><dt className="text-sm font-medium text-gray-500">Employment Type</dt><dd className="mt-1 text-sm text-gray-900 font-semibold capitalize">{user.risk_profile?.employment_type?.replace('_', ' ') || 'N/A'}</dd></div>
+                                        </dl>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -244,7 +397,7 @@ const Profile = () => {
                                     <input type="text" name="occupation" value={riskProfile.occupation} onChange={handleRiskChange} placeholder="e.g. Software Engineer" className={inputClass} />
                                 </div>
                                 <div>
-                                    <label className={labelClass}>Annual Income ($)</label>
+                                    <label className={labelClass}>Annual Income (₹)</label>
                                     <input type="number" name="annual_income" value={riskProfile.annual_income} onChange={handleRiskChange} placeholder="e.g. 60000" className={inputClass} />
                                 </div>
                                 <div>

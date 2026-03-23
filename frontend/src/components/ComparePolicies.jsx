@@ -181,13 +181,13 @@ const ComparePolicies = () => {
 
                                         <div className="mt-auto pt-4">
                                             <div className="flex items-baseline mb-1">
-                                                <span className="text-3xl font-bold text-gray-900">${policy.premium}</span>
+                                                <span className="text-3xl font-bold text-gray-900">₹{policy.premium}</span>
                                                 <span className="text-sm text-gray-500 ml-1">/mo</span>
                                             </div>
                                             <div className="flex items-center text-sm text-gray-500">
                                                 <span>Term: <span className="font-medium text-gray-900">{policy.term_months} mo</span></span>
                                                 <span className="mx-2">•</span>
-                                                <span>Limit: <span className="font-medium text-gray-900">${parseInt(policy.coverage?.limit || policy.coverage?.sum_insured || 250000).toLocaleString()}</span></span>
+                                                <span>Limit: <span className="font-medium text-gray-900">₹{parseInt(policy.coverage?.limit || policy.coverage?.sum_insured || 250000).toLocaleString()}</span></span>
                                             </div>
                                         </div>
                                     </div>
@@ -300,14 +300,14 @@ const ComparePolicies = () => {
                         <tr className="group hover:bg-gray-50/50 transition-colors">
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 border-b border-gray-100">Monthly Premium</td>
                             {selectedPolicies.map(p => (
-                                <td key={p.id} className="px-6 py-4 whitespace-nowrap text-lg text-center font-bold text-gray-900 border-b border-gray-100">${p.premium}</td>
+                                <td key={p.id} className="px-6 py-4 whitespace-nowrap text-lg text-center font-bold text-gray-900 border-b border-gray-100">₹{p.premium}</td>
                             ))}
                         </tr>
                         {/* ... more rows ... (Keeping simple for readability, could expand) */}
                         <tr className="group hover:bg-gray-50/50 transition-colors">
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 border-b border-gray-100">Deductible</td>
                             {selectedPolicies.map(p => (
-                                <td key={p.id} className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-600 border-b border-gray-100">${p.deductible}</td>
+                                <td key={p.id} className="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-600 border-b border-gray-100">₹{p.deductible}</td>
                             ))}
                         </tr>
                         <tr className="group hover:bg-gray-50/50 transition-colors">

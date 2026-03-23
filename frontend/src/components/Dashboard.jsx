@@ -258,7 +258,7 @@ const Dashboard = () => {
                                         </div>
 
                                         <div className="mt-3 flex items-baseline">
-                                            <span className="text-2xl font-bold text-gray-900">${rec.policy?.premium}</span>
+                                            <span className="text-2xl font-bold text-gray-900">₹{rec.policy?.premium}</span>
                                             <span className="text-gray-400 text-sm ml-1">/mo</span>
                                         </div>
                                     </div>

@@ -42,6 +42,18 @@ def update_profile(
     return updated_user
 
 
+@router.put("/me/basic-info", response_model=schemas.User)
+def update_basic_info(
+    *,
+    db: Session = Depends(deps.get_db),
+    profile_in: schemas.UserBasicUpdate,
+    current_user: models.User = Depends(deps.get_current_user),
+) -> Any:
+    """Update basic user details."""
+    updated_user = crud_user.update_basic_info(db, user=current_user, profile_in=profile_in)
+    return updated_user
+
+
 @router.put("/me/password", response_model=schemas.User)
 def update_password(
     *,
