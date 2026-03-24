@@ -1,6 +1,6 @@
 /* ── Full page center ── */
 .auth-wrapper {
-  min-height: calc(100vh - 60px);
+  min-height: calc(100vh - 62px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -15,7 +15,7 @@
   padding: 40px 45px;
   width: 100%;
   max-width: 520px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.15);
 }
 
 /* ── Title ── */
@@ -27,7 +27,7 @@
   color: #1e293b;
 }
 
-/* ── Inline error / success banners ── */
+/* ── Error / success banners ── */
 .auth-error {
   background: #fef2f2;
   color: #b91c1c;
@@ -60,7 +60,6 @@
 .form-row {
   display: flex;
   gap: 14px;
-  align-items: flex-end;
 }
 
 .form-row input,
@@ -72,12 +71,11 @@
   background: #f8fafc;
   font-size: 14px;
   transition: 0.2s ease;
+  min-width: 0;
   height: 46px;
   box-sizing: border-box;
   appearance: none;
   -webkit-appearance: none;
-  min-width: 0;
-  width: 100%;
 }
 
 .form-row input:focus,
@@ -85,15 +83,12 @@
   outline: none;
   border-color: #4c6ef5;
   background: white;
-  box-shadow: 0 0 0 3px rgba(76, 110, 245, 0.1);
+  box-shadow: 0 0 0 3px rgba(76,110,245,0.1);
 }
 
-/* ── Single full width row ── */
-.form-row.single input {
-  width: 100%;
-}
+.form-row.single input { width: 100%; }
 
-/* ── Password row with toggle ── */
+/* ── Password row ── */
 .password-row {
   position: relative;
   flex: 1;
@@ -119,11 +114,9 @@
   border-radius: 4px;
 }
 
-.toggle-password:hover {
-  background: #eef2ff;
-}
+.toggle-password:hover { background: #eef2ff; }
 
-/* ── Input label (for date of birth field) ── */
+/* ── Input label ── */
 .input-group {
   flex: 1;
   display: flex;
@@ -140,9 +133,7 @@
   padding-left: 2px;
 }
 
-.input-group input {
-  width: 100%;
-}
+.input-group input { width: 100%; }
 
 /* ── Submit button ── */
 .auth-button {
@@ -161,15 +152,12 @@
   align-items: center;
   justify-content: center;
   min-height: 48px;
+  width: 100%;
 }
 
 .auth-button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(76, 110, 245, 0.4);
-}
-
-.auth-button:active:not(:disabled) {
-  transform: scale(0.98);
+  box-shadow: 0 10px 25px rgba(76,110,245,0.4);
 }
 
 .auth-button:disabled {
@@ -177,22 +165,20 @@
   cursor: not-allowed;
 }
 
-/* ── Loading spinner inside button ── */
+/* ── Spinner ── */
 .btn-spinner {
   width: 18px;
   height: 18px;
-  border: 2px solid rgba(255, 255, 255, 0.4);
+  border: 2px solid rgba(255,255,255,0.4);
   border-top-color: white;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
   display: inline-block;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Footer link ── */
+/* ── Footer ── */
 .auth-footer {
   margin-top: 22px;
   text-align: center;
@@ -206,14 +192,11 @@
   font-weight: 500;
 }
 
-.auth-footer a:hover {
-  text-decoration: underline;
-}
+.auth-footer a:hover { text-decoration: underline; }
 
-
-/* ══════════════════════════════
+/* ══════════════════════
    PROFILE PAGE
-══════════════════════════════ */
+══════════════════════ */
 
 .profile-container {
   min-height: 100vh;
@@ -231,10 +214,9 @@
   padding: 36px;
   width: 100%;
   max-width: 560px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.15);
 }
 
-/* ── Avatar initials circle ── */
 .profile-avatar {
   width: 72px;
   height: 72px;
@@ -262,10 +244,7 @@
   color: #2b6cb0;
 }
 
-.profile-header p {
-  font-size: 14px;
-  color: #666;
-}
+.profile-header p { font-size: 14px; color: #666; }
 
 .profile-details {
   display: flex;
@@ -283,35 +262,16 @@
   transition: 0.2s ease;
 }
 
-.detail-row:hover {
-  background: #eaf2ff;
-}
+.detail-row:hover { background: #eaf2ff; }
 
-.label {
-  font-weight: 600;
-  color: #333;
-  font-size: 14px;
-}
+.label { font-weight: 600; color: #333; font-size: 14px; }
+.value { color: #555; font-weight: 500; font-size: 14px; }
 
-.value {
-  color: #555;
-  font-weight: 500;
-  font-size: 14px;
-}
-
-/* ── Risk badges ── */
-.risk {
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.risk.low  { background: #e6fffa; color: #0f766e; }
+.risk { padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+.risk.low    { background: #e6fffa; color: #0f766e; }
 .risk.medium { background: #fff7ed; color: #c2410c; }
-.risk.high { background: #fee2e2; color: #b91c1c; }
+.risk.high   { background: #fee2e2; color: #b91c1c; }
 
-/* ── Profile CTA button ── */
 .profile-btn {
   display: block;
   width: 100%;
@@ -329,13 +289,45 @@
 
 .profile-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(76, 110, 245, 0.35);
+  box-shadow: 0 10px 25px rgba(76,110,245,0.35);
 }
 
-/* ── Loading text ── */
 .loading-text {
   text-align: center;
   margin-top: 80px;
   font-size: 16px;
   color: #64748b;
+}
+
+/* ══════════════════════
+   MOBILE RESPONSIVE
+══════════════════════ */
+
+@media (max-width: 768px) {
+  .auth-card {
+    padding: 28px 22px;
+  }
+
+  /* Register form — 2 columns to 1 column on mobile */
+  .form-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .form-row.keep-row {
+    flex-direction: row;
+  }
+
+  .profile-card {
+    padding: 24px 18px;
+  }
+
+  .detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .label { font-size: 12px; color: #94a3b8; }
+  .value { font-size: 14px; }
 }

@@ -6,14 +6,13 @@
   height: 62px;
   background: #1a73e8;
   color: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   position: sticky;
   top: 0;
   z-index: 100;
-  transition: background 0.3s ease;
 }
 
-/* ── Admin navbar — dark theme ── */
+/* ── Admin navbar dark theme ── */
 .navbar-admin {
   background: #1e293b;
 }
@@ -28,6 +27,7 @@
   letter-spacing: 0.3px;
   color: white;
   text-decoration: none;
+  z-index: 101;
 }
 
 .logo-icon {
@@ -42,9 +42,7 @@
   flex-shrink: 0;
 }
 
-.logo-accent {
-  color: #a8d4ff;
-}
+.logo-accent { color: #a8d4ff; }
 
 /* ── Nav links ── */
 .nav-links {
@@ -54,25 +52,26 @@
 }
 
 .nav-links a {
-  color: rgba(255, 255, 255, 0.88);
+  color: rgba(255,255,255,0.88);
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
   padding: 7px 12px;
   border-radius: 8px;
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: background 0.2s ease;
+  white-space: nowrap;
 }
 
 .nav-links a:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255,255,255,0.15);
   color: white;
   text-decoration: none;
 }
 
 /* ── Logout button ── */
 .logout-btn {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
   color: white;
   padding: 7px 14px;
   border-radius: 8px;
@@ -81,9 +80,91 @@
   font-weight: 500;
   margin-left: 6px;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .logout-btn:hover {
-  background: rgba(220, 38, 38, 0.85);
+  background: rgba(220,38,38,0.85);
   border-color: transparent;
+}
+
+/* ── Hamburger button — hidden on desktop ── */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  padding: 6px;
+  background: none;
+  border: none;
+  z-index: 101;
+}
+
+.hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: white;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+/* Hamburger open state */
+.hamburger.open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.hamburger.open span:nth-child(2) {
+  opacity: 0;
+}
+.hamburger.open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ── Mobile styles ── */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0 20px;
+    position: relative;
+  }
+
+  .hamburger {
+    display: flex;
+  }
+
+  .nav-links {
+    display: none;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    position: absolute;
+    top: 62px;
+    left: 0;
+    right: 0;
+    background: #1a73e8;
+    padding: 16px 20px 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    z-index: 100;
+  }
+
+  .navbar-admin .nav-links {
+    background: #1e293b;
+  }
+
+  .nav-links.open {
+    display: flex;
+  }
+
+  .nav-links a {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 15px;
+  }
+
+  .logout-btn {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 6px;
+    padding: 10px 14px;
+    text-align: left;
+  }
 }

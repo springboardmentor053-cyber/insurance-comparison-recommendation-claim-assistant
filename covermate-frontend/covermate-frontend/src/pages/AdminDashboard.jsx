@@ -24,17 +24,16 @@ function AdminDashboard() {
   const [claims, setClaims] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [updating, setUpdating] = useState(null); // claim_id being updated
+  const [updating, setUpdating] = useState(null);
   const [msg, setMsg] = useState({ text: "", type: "" });
 
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("admin_token");
 
   const showMsg = (text, type = "success") => {
     setMsg({ text, type });
     setTimeout(() => setMsg({ text: "", type: "" }), 3000);
   };
 
-  // ── Fetch analytics + claims ──────────────────────────────
   const fetchData = async () => {
     try {
       const [analyticsRes, claimsRes] = await Promise.all([
@@ -59,11 +58,10 @@ function AdminDashboard() {
   };
 
   useEffect(() => {
-    if (!token) { navigate("/login"); return; }
+    if (!token) { navigate("/admin/login"); return; }
     fetchData();
   }, [token, navigate]);
 
-  // ── Update claim status ───────────────────────────────────
   const updateStatus = async (claimId, newStatus) => {
     setUpdating(claimId);
     try {
@@ -73,12 +71,33 @@ function AdminDashboard() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       showMsg(`Status updated to "${newStatus.replace("_", " ")}" successfully`);
-      fetchData(); // refresh table
+      fetchData();
     } catch (err) {
       showMsg(err.response?.data?.detail || "Failed to update status.", "error");
     } finally {
       setUpdating(null);
     }
+  };
+
+  // ✅ CSV Export function
+  const handleExport = () => {
+    const url = `http://127.0.0.1:8000/admin/export/claims`;
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "covermate_claims.csv");
+    // Pass token via fetch instead
+    fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => res.blob())
+      .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `covermate_claims_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        showMsg("Claims exported successfully!");
+      })
+      .catch(() => showMsg("Export failed. Please try again.", "error"));
   };
 
   if (loading) return (
@@ -96,43 +115,59 @@ function AdminDashboard() {
       }}>
         {error}
       </div>
-      <button
-        onClick={() => navigate("/")}
-        style={{
-          marginTop: "16px", padding: "10px 20px",
-          background: "#2563eb", color: "white",
-          border: "none", borderRadius: "8px",
-          cursor: "pointer", fontWeight: "600",
-        }}
-      >
-        Go Home
+      <button onClick={() => navigate("/admin/login")} style={{
+        marginTop: "16px", padding: "10px 20px",
+        background: "#1e293b", color: "white",
+        border: "none", borderRadius: "8px",
+        cursor: "pointer", fontWeight: "600",
+      }}>
+        Go to Admin Login
       </button>
     </div>
   );
 
   const metricCards = [
-    { label: "Total Claims", value: analytics?.total_claims ?? 0, color: "#1a73e8" },
-    { label: "Pending Review", value: (analytics?.submitted ?? 0) + (analytics?.under_review ?? 0), color: "#d97706" },
-    { label: "Approved", value: analytics?.approved ?? 0, color: "#15803d" },
-    { label: "Rejected", value: analytics?.rejected ?? 0, color: "#b91c1c" },
-    { label: "Paid", value: analytics?.paid ?? 0, color: "#6d28d9" },
-    { label: "Fraud Flagged", value: analytics?.fraud_flagged ?? 0, color: "#dc2626" },
-    { label: "Total Users", value: analytics?.total_users ?? 0, color: "#0369a1" },
-    { label: "Total Claimed", value: `₹${(analytics?.total_amount_claimed ?? 0).toLocaleString("en-IN")}`, color: "#1e293b" },
+    { label: "Total Claims",   value: analytics?.total_claims ?? 0,                                          color: "#1a73e8" },
+    { label: "Pending Review", value: (analytics?.submitted ?? 0) + (analytics?.under_review ?? 0),          color: "#d97706" },
+    { label: "Approved",       value: analytics?.approved ?? 0,                                               color: "#15803d" },
+    { label: "Rejected",       value: analytics?.rejected ?? 0,                                               color: "#b91c1c" },
+    { label: "Paid",           value: analytics?.paid ?? 0,                                                   color: "#6d28d9" },
+    { label: "Fraud Flagged",  value: analytics?.fraud_flagged ?? 0,                                          color: "#dc2626" },
+    { label: "Total Users",    value: analytics?.total_users ?? 0,                                            color: "#0369a1" },
+    { label: "Total Claimed",  value: `Rs.${(analytics?.total_amount_claimed ?? 0).toLocaleString("en-IN")}`, color: "#1e293b" },
   ];
 
   return (
     <div style={{
-      padding: "32px", fontFamily: "'Segoe UI', sans-serif",
+      padding: "24px", fontFamily: "'Segoe UI', sans-serif",
       background: "#f4f6f9", minHeight: "100vh",
     }}>
 
       {/* Header */}
-      <div style={{ marginBottom: "28px" }}>
-        <h2 style={{ margin: 0, color: "#1e293b", fontSize: "22px" }}>Admin Dashboard</h2>
-        <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "14px" }}>
-          Manage claims, review fraud flags, update claim status
-        </p>
+      <div style={{
+        marginBottom: "24px",
+        display: "flex", justifyContent: "space-between",
+        alignItems: "flex-start", flexWrap: "wrap", gap: "12px",
+      }}>
+        <div>
+          <h2 style={{ margin: 0, color: "#1e293b", fontSize: "22px" }}>Admin Dashboard</h2>
+          <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "14px" }}>
+            Manage claims, review fraud flags, update claim status
+          </p>
+        </div>
+
+        {/* ✅ Export CSV button */}
+        <button
+          onClick={handleExport}
+          style={{
+            padding: "10px 20px", background: "#1e293b",
+            color: "white", border: "none", borderRadius: "9px",
+            cursor: "pointer", fontWeight: "600", fontSize: "14px",
+            display: "flex", alignItems: "center", gap: "8px",
+          }}
+        >
+          Export CSV
+        </button>
       </div>
 
       {/* Notification */}
@@ -148,25 +183,21 @@ function AdminDashboard() {
         </div>
       )}
 
-      {/* Analytics metric cards */}
+      {/* Analytics cards */}
       <div style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-        gap: "14px", marginBottom: "32px",
+        gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+        gap: "12px", marginBottom: "28px",
       }}>
         {metricCards.map(({ label, value, color }) => (
           <div key={label} style={{
             background: "white", borderRadius: "12px",
-            padding: "18px 20px",
+            padding: "16px 18px",
             boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
             borderLeft: `4px solid ${color}`,
           }}>
-            <p style={{ margin: 0, fontSize: "12px", color: "#64748b", fontWeight: "500" }}>
-              {label}
-            </p>
-            <p style={{ margin: "6px 0 0", fontSize: "22px", fontWeight: "700", color }}>
-              {value}
-            </p>
+            <p style={{ margin: 0, fontSize: "12px", color: "#64748b", fontWeight: "500" }}>{label}</p>
+            <p style={{ margin: "6px 0 0", fontSize: "20px", fontWeight: "700", color }}>{value}</p>
           </div>
         ))}
       </div>
@@ -174,11 +205,10 @@ function AdminDashboard() {
       {/* Claims table */}
       <div style={{
         background: "white", borderRadius: "14px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-        overflow: "hidden",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.06)", overflow: "hidden",
       }}>
         <div style={{
-          padding: "18px 24px", borderBottom: "1px solid #f1f5f9",
+          padding: "16px 20px", borderBottom: "1px solid #f1f5f9",
           display: "flex", justifyContent: "space-between", alignItems: "center",
         }}>
           <h3 style={{ margin: 0, fontSize: "16px", color: "#1e293b" }}>
@@ -191,19 +221,16 @@ function AdminDashboard() {
             No submitted claims yet.
           </p>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table style={{
-              width: "100%", borderCollapse: "collapse",
-              fontSize: "13px",
-            }}>
+          /* ✅ Horizontal scroll wrapper for mobile */
+          <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", minWidth: "700px" }}>
               <thead>
                 <tr style={{ background: "#f8fafc" }}>
                   {["Claim Number", "User", "Type", "Amount", "Incident Date", "Status", "Fraud", "Action"].map((h) => (
                     <th key={h} style={{
-                      padding: "12px 16px", textAlign: "left",
+                      padding: "12px 14px", textAlign: "left",
                       fontWeight: "600", color: "#475569",
-                      borderBottom: "1px solid #e2e8f0",
-                      whiteSpace: "nowrap",
+                      borderBottom: "1px solid #e2e8f0", whiteSpace: "nowrap",
                     }}>
                       {h}
                     </th>
@@ -221,72 +248,50 @@ function AdminDashboard() {
                       borderBottom: "1px solid #f1f5f9",
                       background: isFlagged ? "#fffbeb" : "white",
                     }}>
-                      {/* Claim number */}
-                      <td style={{ padding: "14px 16px", fontWeight: "600", color: "#1e293b", whiteSpace: "nowrap" }}>
+                      <td style={{ padding: "12px 14px", fontWeight: "600", color: "#1e293b", whiteSpace: "nowrap" }}>
                         {claim.claim_number}
                       </td>
-
-                      {/* User */}
-                      <td style={{ padding: "14px 16px" }}>
+                      <td style={{ padding: "12px 14px" }}>
                         <p style={{ margin: 0, fontWeight: "500", color: "#1e293b" }}>{claim.user_name}</p>
                         <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#94a3b8" }}>{claim.user_email}</p>
                       </td>
-
-                      {/* Type */}
-                      <td style={{ padding: "14px 16px", textTransform: "capitalize", color: "#475569" }}>
+                      <td style={{ padding: "12px 14px", textTransform: "capitalize", color: "#475569" }}>
                         {claim.claim_type?.replace("_", " ")}
                       </td>
-
-                      {/* Amount */}
-                      <td style={{ padding: "14px 16px", fontWeight: "600", color: "#1a73e8", whiteSpace: "nowrap" }}>
-                        {claim.amount_claimed
-                          ? `₹${claim.amount_claimed.toLocaleString("en-IN")}`
-                          : "—"}
+                      <td style={{ padding: "12px 14px", fontWeight: "600", color: "#1a73e8", whiteSpace: "nowrap" }}>
+                        {claim.amount_claimed ? `Rs.${claim.amount_claimed.toLocaleString("en-IN")}` : "-"}
                       </td>
-
-                      {/* Incident date */}
-                      <td style={{ padding: "14px 16px", color: "#475569", whiteSpace: "nowrap" }}>
-                        {claim.incident_date
-                          ? new Date(claim.incident_date).toLocaleDateString("en-IN")
-                          : "—"}
+                      <td style={{ padding: "12px 14px", color: "#475569", whiteSpace: "nowrap" }}>
+                        {claim.incident_date ? new Date(claim.incident_date).toLocaleDateString("en-IN") : "-"}
                       </td>
-
-                      {/* Status badge */}
-                      <td style={{ padding: "14px 16px" }}>
+                      <td style={{ padding: "12px 14px" }}>
                         <span style={{
                           background: config.bg, color: config.color,
                           padding: "4px 10px", borderRadius: "20px",
-                          fontWeight: "600", fontSize: "12px",
-                          whiteSpace: "nowrap",
+                          fontWeight: "600", fontSize: "12px", whiteSpace: "nowrap",
                         }}>
                           {config.label}
                         </span>
                       </td>
-
-                      {/* Fraud flags */}
-                      <td style={{ padding: "14px 16px" }}>
+                      <td style={{ padding: "12px 14px" }}>
                         {isFlagged ? (
                           <span style={{
                             background: "#fef2f2", color: "#b91c1c",
                             padding: "4px 10px", borderRadius: "20px",
                             fontWeight: "600", fontSize: "12px",
                           }}>
-                            ⚠ {claim.fraud_flags.length} flag{claim.fraud_flags.length > 1 ? "s" : ""}
+                            {claim.fraud_flags.length} flag{claim.fraud_flags.length > 1 ? "s" : ""}
                           </span>
                         ) : (
                           <span style={{ color: "#94a3b8", fontSize: "12px" }}>Clean</span>
                         )}
                       </td>
-
-                      {/* Action — status update dropdown */}
-                      <td style={{ padding: "14px 16px" }}>
+                      <td style={{ padding: "12px 14px" }}>
                         {nextStatuses.length > 0 ? (
                           <select
                             defaultValue=""
                             disabled={updating === claim.claim_id}
-                            onChange={(e) => {
-                              if (e.target.value) updateStatus(claim.claim_id, e.target.value);
-                            }}
+                            onChange={(e) => { if (e.target.value) updateStatus(claim.claim_id, e.target.value); }}
                             style={{
                               padding: "7px 10px", borderRadius: "8px",
                               border: "1px solid #e2e8f0", fontSize: "12px",
@@ -296,9 +301,7 @@ function AdminDashboard() {
                           >
                             <option value="">Update status</option>
                             {nextStatuses.map((s) => (
-                              <option key={s} value={s}>
-                                → {s.replace("_", " ")}
-                              </option>
+                              <option key={s} value={s}>→ {s.replace("_", " ")}</option>
                             ))}
                           </select>
                         ) : (
@@ -316,15 +319,15 @@ function AdminDashboard() {
         )}
       </div>
 
-      {/* Fraud flags detail section */}
+      {/* Fraud flags detail */}
       {claims.some((c) => c.is_flagged) && (
         <div style={{
-          marginTop: "28px", background: "white",
-          borderRadius: "14px", padding: "24px",
+          marginTop: "24px", background: "white",
+          borderRadius: "14px", padding: "20px",
           boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
         }}>
           <h3 style={{ margin: "0 0 16px", fontSize: "16px", color: "#b91c1c" }}>
-            ⚠ Fraud Flags Detail
+            Fraud Flags Detail
           </h3>
           {claims.filter((c) => c.is_flagged).map((claim) => (
             <div key={claim.claim_id} style={{
@@ -336,10 +339,7 @@ function AdminDashboard() {
                 {claim.claim_number} — {claim.user_name}
               </p>
               {claim.fraud_flags.map((flag, i) => (
-                <div key={i} style={{
-                  display: "flex", gap: "10px", alignItems: "flex-start",
-                  marginBottom: "4px",
-                }}>
+                <div key={i} style={{ display: "flex", gap: "10px", alignItems: "flex-start", marginBottom: "4px" }}>
                   <span style={{
                     background: flag.severity === "high" ? "#fef2f2" : "#fffbeb",
                     color: flag.severity === "high" ? "#b91c1c" : "#d97706",
@@ -348,9 +348,7 @@ function AdminDashboard() {
                   }}>
                     {flag.severity.toUpperCase()}
                   </span>
-                  <p style={{ margin: 0, fontSize: "13px", color: "#475569" }}>
-                    {flag.detail}
-                  </p>
+                  <p style={{ margin: 0, fontSize: "13px", color: "#475569" }}>{flag.detail}</p>
                 </div>
               ))}
             </div>

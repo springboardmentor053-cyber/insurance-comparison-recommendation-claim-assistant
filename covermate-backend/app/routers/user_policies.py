@@ -5,9 +5,9 @@ from app.models.user_policy import UserPolicy
 from app.models.policy import Policy
 from app.models.user import User
 from app.routers.auth import get_current_user
-from app.models.policy import Policy
 
 router = APIRouter(prefix="/user-policies", tags=["User Policies"])
+
 
 @router.post("/purchase/{policy_id}")
 def purchase_policy(
@@ -15,7 +15,6 @@ def purchase_policy(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-
     purchase = UserPolicy(
         user_id=current_user.id,
         policy_id=policy_id
@@ -29,7 +28,6 @@ def purchase_policy(
         "message": "Policy purchased successfully",
         "policy_id": policy_id
     }
-    
 
 
 @router.get("/my-policies")
@@ -37,7 +35,6 @@ def get_my_policies(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-
     results = (
         db.query(UserPolicy, Policy)
         .join(Policy, Policy.id == UserPolicy.policy_id)
@@ -51,8 +48,10 @@ def get_my_policies(
         response.append({
             "user_policy_id": up.id,
             "policy_title": policy.title,
-            "premium": policy.premium,
-            "policy_type": policy.policy_type
+            "premium": float(policy.premium),
+            "policy_type": policy.policy_type,
+            "status": up.status,        
+            "purchase_date": str(up.purchase_date) if up.purchase_date else None
         })
 
     return response

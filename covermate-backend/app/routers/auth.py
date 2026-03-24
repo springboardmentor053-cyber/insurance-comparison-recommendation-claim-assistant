@@ -12,7 +12,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
-# ── Register ───────────────────────────────────────────────────
+# ── Register 
 @router.post("/register")
 def register(user: UserCreate, db: Session = Depends(get_db)):
 
@@ -46,7 +46,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     return {"message": "User registered successfully"}
 
 
-# ── Regular user login ─────────────────────────────────────────
+# ── Regular user login 
 # Blocks admin users from logging in here
 @router.post("/login")
 def login(
@@ -76,7 +76,7 @@ def login(
     }
 
 
-# ── Admin login ────────────────────────────────────────────────
+# ── Admin login 
 # Only allows users with is_admin = True
 @router.post("/admin-login")
 def admin_login(
@@ -107,7 +107,7 @@ def admin_login(
     }
 
 
-# ── Get current user ───────────────────────────────────────────
+# ── Get current user 
 @router.get("/me")
 def get_current_user(
     token: str = Depends(oauth2_scheme),

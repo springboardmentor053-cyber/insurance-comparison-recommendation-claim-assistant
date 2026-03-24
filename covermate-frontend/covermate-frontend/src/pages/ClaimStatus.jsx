@@ -13,7 +13,7 @@ const statusConfig = {
 
 const progressSteps = ["submitted", "under_review", "approved", "paid"];
 
-// ── Timeline component ─────────────────────────────────────
+//Timeline component
 function ClaimTimeline({ claimId, token }) {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,16 +31,18 @@ function ClaimTimeline({ claimId, token }) {
   if (history.length === 0) return null;
 
   const formatDate = (dateStr) => {
-    const d = new Date(dateStr);
+    const d = new Date(dateStr + "Z");
     return d.toLocaleDateString("en-IN", {
-      day: "numeric", month: "short", year: "numeric"
+      day: "numeric", month: "short", year: "numeric",
+      timeZone: "Asia/Kolkata"
     });
   };
 
   const formatTime = (dateStr) => {
-    const d = new Date(dateStr);
+    const d = new Date(dateStr + "Z");
     return d.toLocaleTimeString("en-IN", {
-      hour: "2-digit", minute: "2-digit"
+      hour: "2-digit", minute: "2-digit",
+      timeZone: "Asia/Kolkata"
     });
   };
 

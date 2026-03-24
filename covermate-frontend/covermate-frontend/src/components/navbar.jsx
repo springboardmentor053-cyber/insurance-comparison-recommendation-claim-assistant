@@ -1,102 +1,114 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import axios from "axios";
 import "./navbar.css";
 
 function Navbar() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isAdminPath = location.pathname.startsWith("/admin");
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setIsLoggedIn(false);
-      setIsAdmin(false);
-      return;
-    }
-
-    setIsLoggedIn(true);
-
-    axios
-      .get("http://127.0.0.1:8000/auth/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => {
-        setIsAdmin(res.data.is_admin === true);
-      })
-      .catch(() => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("admin_token");
-        setIsLoggedIn(false);
-        setIsAdmin(false);
-      });
-  }, []);
+    const adminToken = localStorage.getItem("admin_token");
+    const userToken = localStorage.getItem("token");
+    setIsAdminLoggedIn(!!adminToken);
+    setIsUserLoggedIn(!!userToken);
+    setMenuOpen(false); // close menu on route change
+  }, [location.pathname]);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("admin_token");
-    setIsLoggedIn(false);
-    setIsAdmin(false);
-    // Admin goes back to admin login, user goes to regular login
-    navigate(isAdmin ? "/admin/login" : "/login");
+    if (isAdminPath) {
+      localStorage.removeItem("admin_token");
+      setIsAdminLoggedIn(false);
+      navigate("/admin/login");
+    } else {
+      localStorage.removeItem("token");
+      setIsUserLoggedIn(false);
+      navigate("/login");
+    }
+    setMenuOpen(false);
   };
 
-  return (
-    <nav className={`navbar ${isAdmin ? "navbar-admin" : ""}`}>
+  const closeMenu = () => setMenuOpen(false);
 
-      {/* Logo */}
+  // ── Admin navbar ──────────────────────────────────────────
+  if (isAdminPath) {
+    return (
+      <nav className="navbar navbar-admin">
+        <div className="logo">
+          <div className="logo-icon">🛡️</div>
+          <span>Cover<span className="logo-accent">Mate</span></span>
+        </div>
+
+        {isAdminLoggedIn && (
+          <button
+            className={`hamburger ${menuOpen ? "open" : ""}`}
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            <span></span><span></span><span></span>
+          </button>
+        )}
+
+        <div className={`nav-links ${menuOpen ? "open" : ""}`}>
+          {isAdminLoggedIn ? (
+            <>
+              <span style={{
+                fontSize: "12px", fontWeight: "600",
+                background: "rgba(255,255,255,0.15)",
+                padding: "4px 10px", borderRadius: "20px",
+                letterSpacing: "0.8px", color: "rgba(255,255,255,0.9)",
+              }}>
+                ADMIN
+              </span>
+              <Link to="/admin" onClick={closeMenu}>Dashboard</Link>
+              <button className="logout-btn" onClick={handleLogout}>Logout</button>
+            </>
+          ) : (
+            <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)" }}>
+              Administration Portal
+            </span>
+          )}
+        </div>
+      </nav>
+    );
+  }
+
+  // ── User navbar ───────────────────────────────────────────
+  return (
+    <nav className="navbar">
       <div className="logo">
         <div className="logo-icon">🛡️</div>
         <span>Cover<span className="logo-accent">Mate</span></span>
       </div>
 
-      <div className="nav-links">
+      {/* Hamburger button */}
+      <button
+        className={`hamburger ${menuOpen ? "open" : ""}`}
+        onClick={() => setMenuOpen(!menuOpen)}
+      >
+        <span></span><span></span><span></span>
+      </button>
 
-        {/* ── ADMIN navbar — only dashboard + logout ── */}
-        {isLoggedIn && isAdmin ? (
+      <div className={`nav-links ${menuOpen ? "open" : ""}`}>
+        <Link to="/" onClick={closeMenu}>Home</Link>
+        <Link to="/policies" onClick={closeMenu}>Policies</Link>
+        <Link to="/my-policies" onClick={closeMenu}>My Policies</Link>
+
+        {isUserLoggedIn ? (
           <>
-            <span style={{
-              fontSize: "12px",
-              fontWeight: "600",
-              background: "rgba(255,255,255,0.15)",
-              padding: "4px 10px",
-              borderRadius: "20px",
-              letterSpacing: "0.8px",
-              color: "rgba(255,255,255,0.9)",
-            }}>
-              ADMIN
-            </span>
-            <Link to="/admin">Dashboard</Link>
-            <button className="logout-btn" onClick={handleLogout}>
-              Logout
-            </button>
+            <Link to="/profile" onClick={closeMenu}>Profile</Link>
+            <button className="logout-btn" onClick={handleLogout}>Logout</button>
           </>
         ) : (
-
-          /* ── USER navbar — full navigation ── */
           <>
-            <Link to="/">Home</Link>
-            <Link to="/policies">Policies</Link>
-            <Link to="/my-policies">My Policies</Link>
-
-            {isLoggedIn ? (
-              <>
-                <Link to="/profile">Profile</Link>
-                <button className="logout-btn" onClick={handleLogout}>
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <Link to="/login">Login</Link>
-                <Link to="/register">Register</Link>
-              </>
-            )}
+            <Link to="/login" onClick={closeMenu}>Login</Link>
+            <Link to="/register" onClick={closeMenu}>Register</Link>
           </>
         )}
       </div>
-
     </nav>
   );
 }

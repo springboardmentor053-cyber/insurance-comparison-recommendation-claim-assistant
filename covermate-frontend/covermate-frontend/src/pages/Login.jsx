@@ -34,13 +34,14 @@ function Login() {
         { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
       );
 
+      //Save as token only — never touches admin_token
       localStorage.setItem("token", response.data.access_token);
+      // localStorage.removeItem("token");
+      window.dispatchEvent(new Event("storage"));
       navigate("/profile");
-      window.location.reload();
+      // window.location.reload();
     } catch (err) {
       const detail = err.response?.data?.detail || "";
-
-      // ✅ Special handling — admin trying to use regular login
       if (detail.includes("Admin accounts must use")) {
         setIsAdminError(true);
       } else {
@@ -56,30 +57,16 @@ function Login() {
       <div className="auth-card">
         <h2 className="auth-title">Welcome Back</h2>
 
-        {/* Regular error */}
         {error && <div className="auth-error">{error}</div>}
 
-        {/* Admin redirect message */}
         {isAdminError && (
           <div style={{
-            background: "#1e293b",
-            color: "white",
-            borderRadius: "10px",
-            padding: "12px 16px",
-            fontSize: "13px",
-            marginBottom: "16px",
-            textAlign: "center",
-            lineHeight: "1.6",
+            background: "#1e293b", color: "white", borderRadius: "10px",
+            padding: "12px 16px", fontSize: "13px",
+            marginBottom: "16px", textAlign: "center", lineHeight: "1.6",
           }}>
             This is an admin account. Please use the{" "}
-            <a
-              href="/admin/login"
-              style={{
-                color: "#93c5fd",
-                fontWeight: "700",
-                textDecoration: "underline",
-              }}
-            >
+            <a href="/admin/login" style={{ color: "#93c5fd", fontWeight: "700", textDecoration: "underline" }}>
               Admin Portal
             </a>{" "}
             to login.
@@ -89,38 +76,27 @@ function Login() {
         <form className="auth-form" onSubmit={handleSubmit}>
           <div className="form-row single">
             <input
-              type="email"
-              name="email"
+              type="email" name="email"
               placeholder="Enter Email"
               value={formData.email}
-              onChange={handleChange}
-              required
+              onChange={handleChange} required
             />
           </div>
 
           <div className="form-row single password-row">
             <input
               type={showPassword ? "text" : "password"}
-              name="password"
-              placeholder="Enter Password"
+              name="password" placeholder="Enter Password"
               value={formData.password}
-              onChange={handleChange}
-              required
+              onChange={handleChange} required
             />
-            <button
-              type="button"
-              className="toggle-password"
-              onClick={() => setShowPassword(!showPassword)}
-            >
+            <button type="button" className="toggle-password"
+              onClick={() => setShowPassword(!showPassword)}>
               {showPassword ? "Hide" : "Show"}
             </button>
           </div>
 
-          <button
-            type="submit"
-            className="auth-button"
-            disabled={loading}
-          >
+          <button type="submit" className="auth-button" disabled={loading}>
             {loading ? <span className="btn-spinner"></span> : "Login"}
           </button>
         </form>
