@@ -62,22 +62,24 @@ class UserPolicy(Base):
     # Relationships
     user = relationship("User", back_populates="user_policies")
     policy = relationship("Policy", back_populates="user_policies")
-    claims = relationship("Claim", back_populates="user_policy")
+    claims = relationship("Claim", back_populates="user_policy", cascade="all, delete-orphan")
 
 class Claim(Base):
     __tablename__ = "claims"
     id = Column(Integer, primary_key=True, index=True)
     user_policy_id = Column(Integer, ForeignKey("user_policies.id"))
-    claim_number = Column(String, unique=True)
-    claim_type = Column(String)
+    claim_number = Column(String, unique=True, index=True)
+    claim_type = Column(String)  # e.g., "accident", "theft", "damage"
     incident_date = Column(Date)
+    description = Column(Text)  # Added description field
     amount_claimed = Column(Numeric)
     status = Column(String)  # draft, submitted, under_review, approved, rejected, paid
     created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())  # Optional: track updates
     
     # Relationships
     user_policy = relationship("UserPolicy", back_populates="claims")
-    documents = relationship("ClaimDocument", back_populates="claim")
+    documents = relationship("ClaimDocument", back_populates="claim", cascade="all, delete-orphan")
     fraud_flags = relationship("FraudFlag", back_populates="claim")
 
 class ClaimDocument(Base):
@@ -85,9 +87,10 @@ class ClaimDocument(Base):
     id = Column(Integer, primary_key=True, index=True)
     claim_id = Column(Integer, ForeignKey("claims.id"))
     file_url = Column(String)
-    doc_type = Column(String)
+    doc_type = Column(String)  # e.g., "accident_photo", "police_report", "estimate"
     uploaded_at = Column(DateTime, server_default=func.now())
     
+    # Relationships
     claim = relationship("Claim", back_populates="documents")
 
 class Recommendation(Base):
@@ -113,6 +116,7 @@ class FraudFlag(Base):
     details = Column(Text)
     created_at = Column(DateTime, server_default=func.now())
     
+    # Relationships
     claim = relationship("Claim", back_populates="fraud_flags")
 
 class AdminLog(Base):

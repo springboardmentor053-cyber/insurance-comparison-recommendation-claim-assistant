@@ -42,6 +42,62 @@ class PolicyResponse(BaseModel):
     class Config:
         from_attributes = True
 
+# UserPolicy Schemas (for claims wizard)
+class UserPolicyResponse(BaseModel):
+    id: int
+    policy_number: str
+    status: str
+    start_date: date
+    end_date: date
+    policy: PolicyResponse  # Nested policy details
+
+    class Config:
+        from_attributes = True
+
+# Claim Schemas
+class ClaimBase(BaseModel):
+    user_policy_id: int
+    claim_type: str
+    incident_date: date
+    description: str
+    amount_claimed: float
+
+class ClaimCreate(ClaimBase):
+    pass
+
+class ClaimUpdate(BaseModel):
+    status: Optional[str] = None
+    amount_claimed: Optional[float] = None
+    description: Optional[str] = None
+
+class ClaimResponse(ClaimBase):
+    id: int
+    claim_number: str
+    status: str
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class ClaimDetailResponse(ClaimResponse):
+    user_policy: UserPolicyResponse  # Include policy details
+    documents: List["ClaimDocumentResponse"] = []
+
+class ClaimDocumentBase(BaseModel):
+    doc_type: str
+
+class ClaimDocumentCreate(ClaimDocumentBase):
+    pass
+
+class ClaimDocumentResponse(ClaimDocumentBase):
+    id: int
+    file_url: str
+    uploaded_at: datetime
+
+    class Config:
+        from_attributes = True
+
 # Recommendation Schemas
 class UserPreferences(BaseModel):
     """Schema for capturing user preferences for recommendations"""
@@ -91,3 +147,6 @@ class ScoringBreakdown(BaseModel):
     term_score: float
     total_score: float
     reason: str
+
+# For forward reference in ClaimDetailResponse
+ClaimDetailResponse.model_rebuild()

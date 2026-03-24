@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";   // Added useRef
+import { useNavigate } from "react-router-dom";
 import API from "../api";
 import PremiumCalculator from "../components/PremiumCalculator";
 import RecommendationsList from "../components/RecommendationsList";
@@ -24,6 +25,7 @@ const policyTypeIcons = {
 };
 
 function Policies({ showRecommendations: externalShowRecs, setShowRecommendations: externalSetShowRecs }) {
+  const navigate = useNavigate();
   const [policies, setPolicies] = useState([]);
   const [filteredPolicies, setFilteredPolicies] = useState([]);
   const [selectedPolicies, setSelectedPolicies] = useState([]);
@@ -44,6 +46,9 @@ function Policies({ showRecommendations: externalShowRecs, setShowRecommendation
   const [searchTerm, setSearchTerm] = useState("");
   
   const [user, setUser] = useState({ dob: "1996-01-01", risk_profile: {} });
+
+  // Ref to prevent multiple calls to loadRecommendationsCount
+  const isFetchingCount = useRef(false);
 
   // Load recommendations count
   const loadRecommendationsCount = async () => {
@@ -126,8 +131,11 @@ function Policies({ showRecommendations: externalShowRecs, setShowRecommendation
 
   // Load recommendations count when user is available and recommendations are showing
   useEffect(() => {
-    if (user?.id && showRecommendations) {
-      loadRecommendationsCount();
+    if (user?.id && showRecommendations && !isFetchingCount.current) {
+      isFetchingCount.current = true;
+      loadRecommendationsCount().finally(() => {
+        isFetchingCount.current = false;
+      });
     }
   }, [user, showRecommendations]);
 
@@ -639,9 +647,34 @@ function Policies({ showRecommendations: externalShowRecs, setShowRecommendation
               >
                 Review Terms
               </a>
-              <button className="bg-slate-900 text-white px-10 py-5 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-blue-600 transition-all">
-                Proceed to Checkout
-              </button>
+              <div className="flex gap-3">
+                {/* BUY POLICY BUTTON */}
+                <button 
+                  onClick={async () => {
+                    try {
+                      await API.post(`/claims/buy-policy/${viewingDetails.id}`);
+                      alert('Policy purchased successfully! You can now file a claim.');
+                      setViewingDetails(null);
+                    } catch (err) {
+                      alert('Failed to purchase policy');
+                    }
+                  }}
+                  className="bg-green-600 text-white px-6 py-5 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-green-700 transition-all"
+                >
+                  Buy Policy
+                </button>
+                {/* FILE CLAIM BUTTON */}
+                <button 
+                  onClick={() => {
+                    setViewingDetails(null);
+                    localStorage.setItem('claimPolicyId', viewingDetails.id);
+                    navigate('/claims/new');
+                  }}
+                  className="bg-slate-900 text-white px-10 py-5 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-blue-600 transition-all"
+                >
+                  File a Claim
+                </button>
+              </div>
             </div>
           </div>
         </div>

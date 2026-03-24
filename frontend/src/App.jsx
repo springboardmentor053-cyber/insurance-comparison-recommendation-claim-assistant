@@ -3,6 +3,12 @@ import { useState, useEffect } from "react";
 import Policies from "./pages/Policies";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ClaimWizard from "./components/ClaimWizard";
+import MyPolicies from "./pages/MyPolicies";
+import MyClaims from "./pages/MyClaims";
+import PolicyDetail from "./pages/PolicyDetail";   
+import ClaimDetail from './pages/ClaimDetail';
+import AdminClaims from './pages/AdminClaims';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -20,7 +26,6 @@ function App() {
       const storedUser = localStorage.getItem("user");
       setUser(storedUser ? JSON.parse(storedUser) : null);
     };
-
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
@@ -35,7 +40,7 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-[#e6edf5] font-sans text-slate-900">
-        {/* --- NAVIGATION --- */}
+        {/* Navigation */}
         <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/50">
           <div className="max-w-7xl mx-auto px-6 h-18 flex items-center justify-between">
             <div className="flex items-center gap-8">
@@ -43,17 +48,13 @@ function App() {
                 COVERMATE
               </Link>
               <div className="hidden md:flex gap-6 text-[11px] font-black uppercase tracking-widest">
-                <Link 
-                  to="/" 
-                  className="text-slate-400 hover:text-blue-600 transition"
-                >
+                <Link to="/" className="text-slate-400 hover:text-blue-600 transition">
                   Catalog
                 </Link>
                 <button
                   onClick={() => {
                     if (user) {
                       setShowRecommendations(!showRecommendations);
-                      // If we're on policies page, we need to pass this state
                       window.dispatchEvent(new CustomEvent('toggleRecommendations', { 
                         detail: { show: !showRecommendations } 
                       }));
@@ -62,13 +63,21 @@ function App() {
                     }
                   }}
                   className={`${
-                    showRecommendations 
-                      ? 'text-blue-600' 
-                      : 'text-slate-400 hover:text-blue-600'
+                    showRecommendations ? 'text-blue-600' : 'text-slate-400 hover:text-blue-600'
                   } transition bg-transparent border-none cursor-pointer font-black uppercase tracking-widest text-[11px]`}
                 >
                   Recommendations
                 </button>
+                {user && (
+                  <>
+                    <Link to="/my-policies" className="text-slate-400 hover:text-blue-600 transition text-[11px] font-black uppercase tracking-widest">
+                      My Policies
+                    </Link>
+                    <Link to="/claims" className="text-slate-400 hover:text-blue-600 transition text-[11px] font-black uppercase tracking-widest">
+                      My Claims
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
 
@@ -99,7 +108,7 @@ function App() {
           </div>
         </nav>
 
-        {/* --- MAIN CONTENT --- */}
+        {/* Main Content */}
         <main className="max-w-7xl mx-auto py-12">
           <Routes>
             <Route 
@@ -112,12 +121,18 @@ function App() {
               } 
             />
             <Route path="/policies" element={<Policies />} />
+            <Route path="/policies/:id" element={<PolicyDetail />} />   {/* new route */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/claims/new" element={<ClaimWizard />} />
+            <Route path="/my-policies" element={<MyPolicies />} />
+            <Route path="/claims" element={<MyClaims />} />
+            <Route path="/claims/:id" element={<ClaimDetail />} />
+            <Route path="/admin/claims" element={<AdminClaims />} />
           </Routes>
         </main>
 
-        {/* --- FOOTER --- */}
+        {/* Footer */}
         <footer className="border-t border-slate-200/50 bg-white/80 backdrop-blur-sm py-10 mt-20">
           <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
