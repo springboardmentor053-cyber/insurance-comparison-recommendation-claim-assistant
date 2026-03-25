@@ -2,7 +2,7 @@
 
 CoverMate is a full-stack application that lets users **compare insurance policies**, get **personalized recommendations**, and **manage claims** — all in one place. Admins can monitor risk via **fraud detection** rules and analytics dashboards.
 
-> **Current Status:** Module A (Auth, Profile & Preferences)  and Module B(Policy Comparison) and C(Recommendation Engine) is complete — **backend + frontend**.
+> **Current Status:** Module A (Auth, Profile & Preferences) ,Module B(Policy Comparison) , C(Recommendation Engine) and D(Claims(filling,doxuments and tracking) is complete — **backend + frontend**.
 
 ---
 
@@ -70,10 +70,17 @@ covermate-backend/
     ├── schemas.py              # 📋 Pydantic request/response validation
     ├── auth.py                 # 🔐 Password hashing + JWT token functions
     ├── deps.py                 # 🔗 Dependency injection (get_current_user, etc.)
+    ├── tasks.py                #Handles email notifications
+    ├── celery_app.py           #email 
     └── routes/
         ├── __init__.py
         ├── auth_routes.py      # 🔑 /auth/* endpoints
-        └── profile_routes.py   # 👤 /profile/* endpoints
+        ├── profile_routes.py   # 👤 /profile/* endpoints
+        ├── admin_routes.py
+        ├── claims_routes.py
+        ├── policy_routes.py
+        └── recommendation_routes.py
+         
 
 covermate-frontend/
 ├── index.html                  # SEO meta, Inter font
@@ -86,16 +93,26 @@ covermate-frontend/
     │   └── AuthContext.jsx     # Auth state, token management
     ├── services/
     │   ├── api.js              # Axios + auto-refresh interceptor
-    │   ├── authService.js      # register, login, getMe, changePassword
+    │   ├── authService.js     # register, login, getMe, changePassword
+    │   ├── policyService.js
     │   └── profileService.js   # Profile & risk profile CRUD
     ├── components/
-    │   ├── Navbar.jsx          # Active-link nav, user avatar, logout
-    │   └── ProtectedRoute.jsx  # Redirects unauthenticated users
+    │   ├── Navbar.jsx        # Active-link nav, user avatar, logout
+    │   └── ProtectedRoute.jsx   # Redirects unauthenticated users
+    │   └── AdminRoute.jsx
     └── pages/
         ├── Login.jsx           # Email + password
         ├── Register.jsx        # Name, email, password, DOB
         ├── Dashboard.jsx       # Stats, quick actions, risk CTA
-        ├── Profile.jsx         # Edit name/DOB, change password
+        ├── Profile.jsx        # Edit name/DOB, change password
+        ├── AdminDashboard.jsx
+        ├── FileClaim.jsx
+        ├── MyClaims.jsx
+        ├── MyPolicies.jsx
+        ├── PremiumCalculator.jsx
+        ├── Quote.jsx
+        ├── Recommendations.jsx
+        ├── Compare.jsx
         └── RiskProfile.jsx     # Age, income, smoker, dependents, policy prefs
 ```
 
@@ -386,7 +403,7 @@ curl -X PUT http://localhost:8001/auth/change-password \
 | **A** | Auth, Profile & Preferences | ✅ Complete | User registration, JWT auth, profile management, risk preferences |
 | **B** | Policy Catalog, Compare & Quote | ✅ Complete | Browse policies, side-by-side comparison, premium calculators |
 | **C** | Recommendation Engine | ✅ Complete | Score policies based on user's risk profile |
-| **D** | Claims (filing, documents, tracking) | ⬜ Planned | File claims, upload documents, track status |
+| **D** | Claims (filing, documents, tracking) |  ✅ Complete | File claims, upload documents, track status |
 | **E** | Fraud Rules & Admin Analytics | ⬜ Planned | Auto-flag suspicious claims, admin dashboards |
 
 ### 8-Week Milestone Plan
@@ -402,6 +419,7 @@ curl -X PUT http://localhost:8001/auth/change-password \
 
 - **Milestone 1:** Authentication, profile, and risk preferences
 - **Milestone 2:** Policy comparison and recommendation logic
+- **Milestone 3:** Claims filling,document upload,and tracking system
 
 ## ✅ Features Implemented
 
@@ -434,4 +452,4 @@ curl -X PUT http://localhost:8001/auth/change-password \
 
 
 
-*Built with ❤️ using FastAPI + PostgreSQL + React.js + Tailwind CSS*
+
