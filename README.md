@@ -2,7 +2,7 @@
 
 CoverMate is a full-stack application that lets users **compare insurance policies**, get **personalized recommendations**, and **manage claims** — all in one place. Admins can monitor risk via **fraud detection** rules and analytics dashboards.
 
-> **Current Status:** Module A (Auth, Profile & Preferences) is complete — **backend + frontend**.
+> **Current Status:** Module A (Auth, Profile & Preferences)  and Module B(Policy Comparison) and C(Recommendation Engine) is complete — **backend + frontend**.
 
 ---
 
@@ -384,8 +384,8 @@ curl -X PUT http://localhost:8001/auth/change-password \
 | Module | Name | Status | Description |
 |--------|------|--------|-------------|
 | **A** | Auth, Profile & Preferences | ✅ Complete | User registration, JWT auth, profile management, risk preferences |
-| **B** | Policy Catalog, Compare & Quote | 🔜 Next | Browse policies, side-by-side comparison, premium calculators |
-| **C** | Recommendation Engine | ⬜ Planned | Score policies based on user's risk profile |
+| **B** | Policy Catalog, Compare & Quote | ✅ Complete | Browse policies, side-by-side comparison, premium calculators |
+| **C** | Recommendation Engine | ✅ Complete | Score policies based on user's risk profile |
 | **D** | Claims (filing, documents, tracking) | ⬜ Planned | File claims, upload documents, track status |
 | **E** | Fraud Rules & Admin Analytics | ⬜ Planned | Auto-flag suspicious claims, admin dashboards |
 
@@ -398,6 +398,17 @@ curl -X PUT http://localhost:8001/auth/change-password \
 | 7–8 | Fraud & Analytics | Fraud rules engine, admin dashboards, QA & deployment |
 
 ---
+## 🚀 Milestone Progress
+
+- **Milestone 1:** Authentication, profile, and risk preferences
+- **Milestone 2:** Policy comparison and recommendation logic
+
+## ✅ Features Implemented
+
+- User Authentication (JWT)
+- Profile & Risk Preference Management
+- Policy Comparison UI
+- Recommendation Engine based on user profile
 
 ## 📖 Glossary for Beginners
 
@@ -421,14 +432,6 @@ curl -X PUT http://localhost:8001/auth/change-password \
 
 ---
 
-## 🤝 Contributing
 
-1. Create a feature branch: `git checkout -b feature/module-b`
-2. Make your changes
-3. Test using the Swagger docs at `/docs`
-4. Commit and push
-5. Open a pull request
-
----
 
 *Built with ❤️ using FastAPI + PostgreSQL + React.js + Tailwind CSS*
