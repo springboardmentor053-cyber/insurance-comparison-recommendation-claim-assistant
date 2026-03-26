@@ -7,6 +7,7 @@ class UserBase(BaseModel):
     email: EmailStr
     full_name: str
     phone: Optional[str] = None
+    is_admin: bool = False
 
 class UserCreate(UserBase):
     password: str
@@ -61,6 +62,7 @@ class UserPreferenceBase(BaseModel):
     annual_income: float
     family_size: int = 1
     health_status: str  # excellent, good, fair, poor
+    vehicle_type: Optional[str] = None
     preferred_coverage: float
     max_monthly_budget: float
     risk_tolerance: str = "medium"  # low, medium, high
