@@ -22,6 +22,7 @@ from app.database import get_db
 from app import models, schemas
 from app.deps import get_current_user
 from app.email_service import dispatch_email
+from app.fraud_engine import run_fraud_checks
 
 router = APIRouter(prefix="/claims", tags=["Claims"])
 
@@ -148,6 +149,7 @@ def list_my_claims(
         .filter(models.UserPolicy.user_id == current_user.id)
         .options(
             joinedload(models.Claim.documents),
+            joinedload(models.Claim.fraud_flags),
             joinedload(models.Claim.user_policy).joinedload(models.UserPolicy.policy).joinedload(models.Policy.provider)
         )
         .order_by(models.Claim.created_at.desc())
@@ -172,6 +174,7 @@ def get_claim(
         )
         .options(
             joinedload(models.Claim.documents),
+            joinedload(models.Claim.fraud_flags),
             joinedload(models.Claim.user_policy).joinedload(models.UserPolicy.policy).joinedload(models.Policy.provider)
         )
         .first()
@@ -249,6 +252,10 @@ def submit_claim(
     claim.status = "submitted"
     db.commit()
     db.refresh(claim)
+
+    # ── Run fraud detection rules automatically ──
+    # This checks for: duplicate docs, suspicious timing, high amount
+    run_fraud_checks(claim.id, db)
 
     # Send email via Celery (.delay() pushes to Redis queue)
     dispatch_email(

@@ -245,6 +245,46 @@ export default function Navbar() {
                             </Link>
                         ))}
 
+                        {/* Admin Section — visible only to admin users */}
+                        {user?.role === 'admin' && (
+                            <>
+                                <div style={{ borderTop: '1px solid rgba(239,68,68,0.2)', margin: '0.375rem 0', paddingTop: '0.375rem' }}>
+                                    <p style={{ fontSize: '0.6875rem', fontWeight: 700, color: '#f87171', padding: '0.125rem 0.75rem 0.375rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Admin</p>
+                                    {[
+                                        { path: '/admin', label: 'Admin Dashboard', icon: '🛡️' },
+                                        { path: '/admin/claims', label: 'All Claims', icon: '📋' },
+                                        { path: '/admin/fraud-flags', label: 'Fraud Flags', icon: '🚨' },
+                                    ].map((item) => (
+                                        <Link
+                                            key={item.path}
+                                            to={item.path}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.625rem',
+                                                padding: '0.625rem 0.75rem',
+                                                borderRadius: '0.5rem',
+                                                fontSize: '0.8125rem',
+                                                fontWeight: 500,
+                                                color: location.pathname === item.path ? '#f87171' : '#d0d0e8',
+                                                textDecoration: 'none',
+                                                transition: 'all 0.15s ease',
+                                                background: location.pathname === item.path ? 'rgba(239,68,68,0.1)' : 'transparent',
+                                            }}
+                                            onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; }}
+                                            onMouseLeave={(e) => {
+                                                e.currentTarget.style.background =
+                                                    location.pathname === item.path ? 'rgba(239,68,68,0.1)' : 'transparent';
+                                            }}
+                                        >
+                                            <span>{item.icon}</span>
+                                            {item.label}
+                                        </Link>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+
                         {/* Divider */}
                         <div style={{ borderTop: '1px solid rgba(124, 58, 237, 0.1)', margin: '0.375rem 0' }} />
 

@@ -203,6 +203,21 @@ class RecommendationResponse(BaseModel):
         from_attributes = True
 
 
+# ━━━━━━━━━━━━━━━━━ FRAUD FLAG SCHEMAS ━━━━━━━━━━━━━━━━━
+
+class FraudFlagResponse(BaseModel):
+    """A fraud flag raised by the fraud detection engine."""
+    id: int
+    claim_id: int
+    rule_code: str
+    severity: str
+    details: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
 # ━━━━━━━━━━━━━━━━━ CLAIM SCHEMAS ━━━━━━━━━━━━━━━━━
 
 class ClaimDocumentResponse(BaseModel):
@@ -248,6 +263,7 @@ class ClaimResponse(BaseModel):
     status: str
     created_at: Optional[datetime] = None
     documents: List[ClaimDocumentResponse] = []
+    fraud_flags: List[FraudFlagResponse] = []
     user_policy: Optional[UserPolicyResponse] = None
 
     class Config:

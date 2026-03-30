@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 import Login from './pages/Login';
@@ -15,6 +16,17 @@ import Recommendations from './pages/Recommendations';
 import Claims from './pages/Claims';
 import ClaimFilingWizard from './pages/ClaimFilingWizard';
 import ClaimDetails from './pages/ClaimDetails';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminClaims from './pages/AdminClaims';
+import AdminFraudFlags from './pages/AdminFraudFlags';
+
+// Guard: only allows users with role === 'admin'
+function AdminRoute({ children }) {
+    const { user, isAuthenticated } = useAuth();
+    if (!isAuthenticated) return <Navigate to="/login" replace />;
+    if (user?.role !== 'admin') return <Navigate to="/" replace />;
+    return children;
+}
 
 export default function App() {
   return (
@@ -38,6 +50,11 @@ export default function App() {
           <Route path="/claims" element={<ProtectedRoute><Claims /></ProtectedRoute>} />
           <Route path="/claims/new" element={<ProtectedRoute><ClaimFilingWizard /></ProtectedRoute>} />
           <Route path="/claims/:id" element={<ProtectedRoute><ClaimDetails /></ProtectedRoute>} />
+
+          {/* Admin-only Routes */}
+          <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+          <Route path="/admin/claims" element={<AdminRoute><AdminClaims /></AdminRoute>} />
+          <Route path="/admin/fraud-flags" element={<AdminRoute><AdminFraudFlags /></AdminRoute>} />
 
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" replace />} />
