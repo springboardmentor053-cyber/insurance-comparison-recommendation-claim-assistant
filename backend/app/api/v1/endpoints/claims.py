@@ -174,6 +174,11 @@ def submit_claim(
         )
 
     claim = crud_claim.submit_claim(db, claim)
+
+    # Run Fraud Engine Rules
+    from app.services.fraud_engine import evaluate_claim
+    evaluate_claim(db, claim.id)
+
     return {"message": "Claim submitted successfully", "claim_number": claim.claim_number}
 
 
@@ -274,6 +279,7 @@ def admin_get_claim(
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
     docs = crud_claim.get_claim_documents(db, claim_id)
+    fraud_flags = claim.fraud_flags if claim.fraud_flags else []
     result = {
         **claim.__dict__,
         "documents": [
@@ -285,6 +291,14 @@ def admin_get_claim(
             }
             for d in docs
         ],
+        "fraud_flags": [
+            {
+                "id": f.id,
+                "rule_name": f.rule_name,
+                "description": f.description,
+                "created_at": f.created_at
+            } for f in fraud_flags
+        ]
     }
     result.pop("_sa_instance_state", None)
     return result
