@@ -33,6 +33,12 @@ class RiskProfileUpdate(BaseModel):
     coverage_priority: Optional[str] = None          # cost_saving / balanced / comprehensive
 
 
+class UserBasicUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    dob: Optional[date] = None
+
+
 class UserBase(BaseModel):
     email: EmailStr
     name: Optional[str] = None

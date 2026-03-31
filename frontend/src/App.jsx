@@ -8,6 +8,11 @@ import Dashboard from './components/Dashboard';
 import ComparePolicies from './components/ComparePolicies';
 import PremiumCalculator from './components/PremiumCalculator';
 import Sidebar from './components/Sidebar';
+import MyPolicies from './components/MyPolicies';
+import MyClaims from './components/MyClaims';
+import ClaimWizard from './components/ClaimWizard';
+import AdminDashboard from './components/AdminDashboard';
+import AdminClaims from './components/AdminClaims';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -22,6 +27,14 @@ const ProtectedRoute = ({ children }) => {
   }
 
   return children;
+};
+
+const HomeRoute = () => {
+  const { user } = useAuth();
+  if (user?.is_admin) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+  return <Dashboard />;
 };
 
 import { useState } from 'react';
@@ -121,12 +134,22 @@ function App() {
               <ProtectedRoute>
                 <MainLayout>
                   <Routes>
-                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/" element={<HomeRoute />} />
                     <Route path="/policies" element={<PolicyList />} />
                     <Route path="/policies/:id" element={<PolicyDetails />} />
                     <Route path="/compare" element={<ComparePolicies />} />
                     <Route path="/calculator" element={<PremiumCalculator />} />
                     <Route path="/profile" element={<Profile />} />
+                    
+                    {/* User Policy and Claim Routes */}
+                    <Route path="/policies/my" element={<MyPolicies />} />
+                    <Route path="/claims/my" element={<MyClaims />} />
+                    <Route path="/claims/file" element={<ClaimWizard />} />
+                    <Route path="/claims/:id/edit" element={<ClaimWizard />} />
+
+                    {/* Admin Routes */}
+                    <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                    <Route path="/admin/claims" element={<AdminClaims />} />
                   </Routes>
                 </MainLayout>
               </ProtectedRoute>

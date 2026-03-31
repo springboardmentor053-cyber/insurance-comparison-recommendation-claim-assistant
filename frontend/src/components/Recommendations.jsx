@@ -121,12 +121,12 @@ const Recommendations = () => {
                                 <div className="mt-4 space-y-3">
                                     <div className="flex justify-between items-baseline">
                                         <span className="text-sm text-gray-500">Premium</span>
-                                        <span className="text-lg font-bold text-gray-900">${rec.policy?.premium?.toLocaleString() || 0}</span>
+                                        <span className="text-lg font-bold text-gray-900">₹{rec.policy?.premium?.toLocaleString() || 0}</span>
                                     </div>
                                     <div className="flex justify-between items-baseline">
                                         <span className="text-sm text-gray-500">Coverage</span>
                                         <span className="text-sm font-medium text-gray-900">
-                                            ${rec.policy?.coverage?.amount?.toLocaleString() || 0}
+                                            ₹{rec.policy?.coverage?.amount?.toLocaleString() || 0}
                                         </span>
                                     </div>
                                 </div>

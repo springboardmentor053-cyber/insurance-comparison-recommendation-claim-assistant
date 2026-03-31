@@ -10,3 +10,5 @@ python-multipart
 email-validator
 sqlalchemy-utils
 pypdf
+celery
+redis

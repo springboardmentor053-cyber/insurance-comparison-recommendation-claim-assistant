@@ -34,7 +34,7 @@ const PolicyCard = ({ policy, onSelect, selected }) => {
 
             <div className="mb-4">
                 <div className="flex items-baseline">
-                    <p className="text-2xl font-bold text-gray-900">${policy.premium}</p>
+                    <p className="text-2xl font-bold text-gray-900">₹{policy.premium}</p>
                     <p className="text-xs text-gray-500 ml-1">/{policy.term_months}mo</p>
                 </div>
             </div>
@@ -42,7 +42,7 @@ const PolicyCard = ({ policy, onSelect, selected }) => {
             <div className="border-t border-gray-100 pt-4 mb-6">
                 <div className="flex justify-between text-sm mb-2">
                     <span className="text-gray-500">Deductible:</span>
-                    <span className="font-medium">${policy.deductible}</span>
+                    <span className="font-medium">₹{policy.deductible}</span>
                 </div>
                 <div className="text-sm">
                     <span className="text-gray-500">Coverage:</span>

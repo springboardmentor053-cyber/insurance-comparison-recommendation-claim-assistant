@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from app.models.user import User
-from app.schemas.user import UserCreate, RiskProfileUpdate
+from app.schemas.user import UserCreate, RiskProfileUpdate, UserBasicUpdate
 from app.core.security import get_password_hash
 
 
@@ -46,6 +46,19 @@ def update_risk_profile(db: Session, user: User, profile_in: RiskProfileUpdate) 
     updates = profile_in.model_dump(exclude_none=True)
     merged = {**existing, **updates}
     user.risk_profile = merged
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def update_basic_info(db: Session, user: User, profile_in: UserBasicUpdate) -> User:
+    if profile_in.name is not None:
+        user.name = profile_in.name
+    if profile_in.email is not None:
+        user.email = profile_in.email
+    if profile_in.dob is not None:
+        user.dob = profile_in.dob
     db.add(user)
     db.commit()
     db.refresh(user)
