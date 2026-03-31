@@ -10,7 +10,6 @@ def send_claim_status_email_task(email: str, claim_number: str, status: str):
     print(f"[Celery] Executing email task for claim {claim_number}")
     subject = f"Update on Your Insurance Claim #{claim_number}"
     
-    # Format the status to be human-readable
     formatted_status = status.replace('_', ' ').capitalize()
     
     message = (

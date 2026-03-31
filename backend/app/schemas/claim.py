@@ -29,6 +29,17 @@ class ClaimStatusHistoryOut(BaseModel):
         from_attributes = True
 
 
+class ClaimFraudFlagOut(BaseModel):
+    id: int
+    claim_id: int
+    rule_name: str
+    description: str
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
 # ── Claim Schemas ──────────────────────────────────────────────────────────────
 
 class ClaimCreate(BaseModel):
@@ -80,6 +91,7 @@ class ClaimOut(BaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     history: List[ClaimStatusHistoryOut] = []
+    fraud_flags: List[ClaimFraudFlagOut] = []
     # Optional extra fields
     incident_location: Optional[str] = None
     third_party_involved: Optional[str] = None

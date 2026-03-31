@@ -13,7 +13,6 @@ from app.core.security import get_password_hash
 SQLALCHEMY_DATABASE_URL = settings.assemble_db_url()
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 def seed_data():
     db = SessionLocal()
     # Clear existing data so we can re-seed with INR data
@@ -45,7 +44,6 @@ def seed_data():
     db.add(admin)
     print(f"Created Admin: {admin.email}")
 
-    # Create User
     user = User(
         email="user@example.com",
         password=get_password_hash("password"),
@@ -63,7 +61,6 @@ def seed_data():
     db.add(user)
     print(f"Created User: {user.email}")
 
-    # Create Providers
     p1 = Provider(name="HealthGuard", country="USA")
     p2 = Provider(name="AutoSecure", country="UK")
     p3 = Provider(name="HomeSafe", country="Canada")
@@ -71,7 +68,6 @@ def seed_data():
     db.commit()
     print("Created Providers")
 
-    # Create Policies — real-world aligned data
     classes_policies = [
         # ── HEALTH ──────────────────────────────────────────────────────
         Policy(

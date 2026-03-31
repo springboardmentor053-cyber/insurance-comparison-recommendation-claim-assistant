@@ -184,9 +184,14 @@ const AdminClaims = () => {
                                     </div>
                                 </div>
                                 <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full capitalize ${STATUS_COLORS[claim.status]}`}>
-                                        {STATUS_ICONS[claim.status]} {claim.status?.replace('_', ' ')}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        {claim.fraud_flags && claim.fraud_flags.length > 0 && (
+                                            <span title="Fraud rules triggered!" className="text-red-500 animate-pulse text-sm">🚩</span>
+                                        )}
+                                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full capitalize ${STATUS_COLORS[claim.status]}`}>
+                                            {STATUS_ICONS[claim.status]} {claim.status?.replace('_', ' ')}
+                                        </span>
+                                    </div>
                                     <span className="font-bold text-sm text-gray-900">₹{Number(claim.amount_claimed).toLocaleString()}</span>
                                     {claim.amount_approved && (
                                         <span className="text-xs text-green-600 font-medium">✓ ₹{Number(claim.amount_approved).toLocaleString()}</span>
@@ -253,6 +258,26 @@ const AdminClaims = () => {
                                 <div className="text-xs text-gray-400 font-medium mb-1">Incident Description</div>
                                 <p className="text-sm text-gray-700 leading-relaxed">{fullClaim.incident_description}</p>
                             </div>
+
+                            {/* Fraud Flags Alert */}
+                            {fullClaim.fraud_flags && fullClaim.fraud_flags.length > 0 && (
+                                <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 animate-pulse-slow">
+                                    <div className="flex items-center gap-2 text-red-700 font-black text-sm uppercase tracking-wider mb-2">
+                                        <span>🚨</span> FRAUD ALERT FLAGS DETECTED
+                                    </div>
+                                    <div className="space-y-2">
+                                        {fullClaim.fraud_flags.map(flag => (
+                                            <div key={flag.id} className="bg-white border border-red-100 rounded-lg p-3 shadow-sm">
+                                                <div className="text-xs font-bold text-red-600 mb-0.5 capitalize">{flag.rule_name.replace('_', ' ')}</div>
+                                                <div className="text-sm text-gray-800 font-medium">{flag.description}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <p className="text-xs text-red-500 mt-3 font-semibold text-center italic">
+                                        Please review these flags carefully before approving the claim.
+                                    </p>
+                                </div>
+                            )}
 
                             {/* Claim History Timeline */}
                             <div className="bg-gray-50 border border-gray-100 rounded-xl p-4">
