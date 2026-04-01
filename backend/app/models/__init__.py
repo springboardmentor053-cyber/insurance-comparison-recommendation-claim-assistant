@@ -3,4 +3,4 @@ from .policy import Policy
 from .provider import Provider
 from .recommendation import Recommendation
 from .user_policy import UserPolicy
-from .claim import Claim, ClaimDocument
+from .claim import Claim, ClaimDocument, ClaimStatusHistory, FraudFlag

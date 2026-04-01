@@ -89,6 +89,14 @@ updates.txt
 test_recommendation_logic.py
 milestone3_claims_plan.md.resolved
 test_db_config.py
+check_config.py
+check_flags.py
+full_trace.txt
+out.txt
+run_and_capture.py
+reset_db.py
+test_fraud.py   
+reset_db.py
 
 # ─── Backend Secrets (NEVER push these) ───────
 backend/.env

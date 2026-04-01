@@ -32,14 +32,20 @@ const POLICY_EXTRA_FIELDS = {
     ],
 };
 
-const DOC_TYPES = ['accident_photo', 'repair_invoice', 'police_report', 'medical_report', 'other'];
+const POLICY_DOC_TYPES = {
+    auto: ['accident_photo', 'repair_invoice', 'police_report', 'other'],
+    health: ['medical_report', 'hospital_bill', 'prescription', 'other'],
+    home: ['property_photo', 'repair_invoice', 'police_report', 'other'],
+    life: ['death_certificate', 'medical_report', 'other'],
+    travel: ['police_report', 'medical_report', 'flight_cancellation_proof', 'other']
+};
 
 const SUGGESTED_DOCS = {
     auto: ['accident_photo', 'police_report'],
-    health: ['medical_report'],
-    home: ['repair_invoice', 'accident_photo'],
-    life: [],
-    travel: []
+    health: ['medical_report', 'hospital_bill'],
+    home: ['property_photo', 'repair_invoice'],
+    life: ['death_certificate'],
+    travel: ['flight_cancellation_proof']
 };
 
 
@@ -77,8 +83,14 @@ const ClaimWizard = () => {
     });
 
     const [docFile, setDocFile] = useState(null);
-    const [docType, setDocType] = useState('accident_photo');
+    const availableDocTypes = POLICY_DOC_TYPES[form.claim_type] || ['other'];
+    const [docType, setDocType] = useState(availableDocTypes[0]);
     const [pendingFiles, setPendingFiles] = useState([]);
+
+    // Update the docType default if the claim type changes
+    useEffect(() => {
+        setDocType((POLICY_DOC_TYPES[form.claim_type] || ['other'])[0]);
+    }, [form.claim_type]);
 
     const extraFields = POLICY_EXTRA_FIELDS[form.claim_type] || [];
 
@@ -325,7 +337,7 @@ const ClaimWizard = () => {
                     <div className="space-y-3">
                         <select value={docType} onChange={e => setDocType(e.target.value)}
                             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300">
-                            {DOC_TYPES.map(t => <option key={t} value={t}>{t.replace('_', ' ')}</option>)}
+                            {availableDocTypes.map(t => <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>)}
                         </select>
                         <div className="flex gap-2">
                             <input type="file" accept="image/*,.pdf" id="claimFileInput"

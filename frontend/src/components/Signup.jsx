@@ -34,6 +34,19 @@ const Signup = () => {
             return setError('Passwords do not match');
         }
 
+        if (formData.dob) {
+            const dobDate = new Date(formData.dob);
+            const today = new Date();
+            let age = today.getFullYear() - dobDate.getFullYear();
+            const m = today.getMonth() - dobDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) {
+                age--;
+            }
+            if (age < 18) {
+                return setError('You must be at least 18 years old to register for insurance.');
+            }
+        }
+
         setLoading(true);
         try {
             // Convert empty strings to null and handle number conversion

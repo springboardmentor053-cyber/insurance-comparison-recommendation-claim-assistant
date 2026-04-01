@@ -40,6 +40,7 @@ class Claim(Base):
     user_policy = relationship("UserPolicy", back_populates="claims")
     documents = relationship("ClaimDocument", back_populates="claim", cascade="all, delete-orphan")
     history = relationship("ClaimStatusHistory", back_populates="claim", order_by="ClaimStatusHistory.changed_at", cascade="all, delete-orphan")
+    fraud_flags = relationship("FraudFlag", back_populates="claim", cascade="all, delete-orphan")
 
 
 class ClaimStatusHistory(Base):
@@ -66,3 +67,19 @@ class ClaimDocument(Base):
 
     # Relationship
     claim = relationship("Claim", back_populates="documents")
+
+
+class FraudFlag(Base):
+    __tablename__ = "fraud_flags"
+
+    id = Column(Integer, primary_key=True, index=True)
+    claim_id = Column(Integer, ForeignKey("claims.id"), nullable=False)
+    rule_code = Column(String, nullable=False)   # DUP_DOC, EARLY_CLAIM, HIGH_AMOUNT, etc.
+    severity = Column(String, nullable=False)    # low, medium, high, critical
+    details = Column(Text, nullable=False)
+    is_reviewed = Column(String, default="pending")  # pending, cleared, confirmed
+    reviewed_by = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationship
+    claim = relationship("Claim", back_populates="fraud_flags")

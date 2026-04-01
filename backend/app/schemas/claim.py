@@ -2,7 +2,7 @@
 from datetime import date, datetime
 from typing import Optional, List
 from decimal import Decimal
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 # ── Claim Document Schemas ─────────────────────────────────────────────────────
@@ -18,12 +18,44 @@ class ClaimDocumentOut(BaseModel):
         from_attributes = True
 
 
+class UserMinimal(BaseModel):
+    id: int
+    name: str
+    email: str
+
+    class Config:
+        from_attributes = True
+
+
+class PolicyMinimal(BaseModel):
+    id: int
+    title: str
+    policy_type: str
+
+    class Config:
+        from_attributes = True
+
+
 class ClaimStatusHistoryOut(BaseModel):
     id: int
     claim_id: int
     status: str
     notes: Optional[str] = None
     changed_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class FraudFlagOut(BaseModel):
+    id: int
+    claim_id: int
+    rule_code: str
+    severity: str
+    details: str
+    is_reviewed: str = "pending"
+    reviewed_by: Optional[str] = None
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -80,6 +112,12 @@ class ClaimOut(BaseModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     history: List[ClaimStatusHistoryOut] = []
+    fraud_flags: List[FraudFlagOut] = []
+    
+    # Extra information for Admin Detail View
+    user: Optional[UserMinimal] = None
+    policy: Optional[PolicyMinimal] = None
+
     # Optional extra fields
     incident_location: Optional[str] = None
     third_party_involved: Optional[str] = None

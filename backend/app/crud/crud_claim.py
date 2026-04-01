@@ -2,6 +2,7 @@ import uuid
 from sqlalchemy.orm import Session
 from app.models.claim import Claim, ClaimDocument, ClaimStatusHistory
 from app.schemas.claim import ClaimCreate, ClaimUpdate
+from app.services.fraud_engine import run_fraud_checks
 
 
 def create_claim(db: Session, data: ClaimCreate, user_id: int) -> Claim:
@@ -81,6 +82,9 @@ def submit_claim(db: Session, claim: Claim) -> Claim:
     )
     db.add(history_entry)
     db.commit()
+
+    # ── Run all fraud detection rules automatically ─────────────────
+    run_fraud_checks(claim, db)
 
     return claim
 

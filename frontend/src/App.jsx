@@ -53,7 +53,7 @@ const MainLayout = ({ children }) => {
       <Sidebar />
 
       <div className="flex-1 flex flex-col md:pl-64 transition-all duration-300">
-        <header className="bg-white shadow h-16 flex items-center justify-between px-6 sticky top-0 z-10">
+        <header className="bg-white shadow h-16 flex items-center justify-between px-6 sticky top-0 z-50">
           <h1 className="text-xl font-semibold text-gray-800">
             Insurance Assistant
           </h1>

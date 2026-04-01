@@ -1,13 +1,16 @@
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
+import csv
+import io
 
 from app.api.deps import get_db, get_current_user
 from app.crud import crud_claim, crud_user_policy
-from app.schemas.claim import ClaimCreate, ClaimUpdate, ClaimOut, ClaimWithDocs, AdminClaimAction
+from app.schemas.claim import ClaimCreate, ClaimUpdate, ClaimOut, ClaimWithDocs, AdminClaimAction, ClaimDocumentOut, PolicyMinimal, UserMinimal
 from app.services.s3_service import upload_file_to_s3, delete_file_from_s3, generate_presigned_url
-from app.models.claim import Claim
+from app.models.claim import Claim, FraudFlag
 from app.worker import send_claim_status_email_task
 
 router = APIRouter()
@@ -210,7 +213,10 @@ def admin_stats(
         "total_claimed": float(total_claimed),
         "total_approved": float(total_approved),
         "total_paid": float(total_paid),
-        "pending_action": counts["submitted"] + counts["under_review"],
+        "pending_action": counts.get("submitted", 0) + counts.get("under_review", 0),
+        "flagged_claims": db.query(Claim).join(FraudFlag).filter(Claim.status.in_(["submitted", "under_review"])).distinct().count(),
+        "approved_count": counts.get("approved", 0),
+        "rejected_count": counts.get("rejected", 0),
     }
 
 
@@ -231,6 +237,7 @@ def admin_list_claims(
         .options(
             joinedload(Claim.user),
             joinedload(Claim.user_policy).joinedload(UserPolicy.policy),
+            joinedload(Claim.fraud_flags),
         )
         .order_by(Claim.created_at.desc())
         .all()
@@ -256,13 +263,123 @@ def admin_list_claims(
             "policy": {
                 "id": policy.id,
                 "title": policy.title,
-                "policy_type": policy.policy_type,
+                "policy_type": policy.policy_type.value if hasattr(policy.policy_type, 'value') else policy.policy_type,
             } if policy else None,
+            "fraud_flags": [
+                {
+                    "rule_code": f.rule_code,
+                    "severity": f.severity,
+                    "details": f.details
+                } for f in getattr(claim, 'fraud_flags', [])
+            ]
         })
     return result
 
 
-@router.get("/admin/{claim_id}", summary="[Admin] Get full claim details")
+# ─── Static admin routes MUST be declared before /admin/{claim_id} ───────────
+
+@router.get("/admin/fraud-flags", summary="[Admin] Get all fraud flags")
+def get_all_fraud_flags(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    flags = db.query(FraudFlag).order_by(FraudFlag.created_at.desc()).all()
+    result = []
+    for flag in flags:
+        claim = flag.claim
+        result.append({
+            "id": flag.id,
+            "claim_id": flag.claim_id,
+            "claim_number": claim.claim_number if claim else None,
+            "user_name": claim.user.name if claim and claim.user else None,
+            "user_email": claim.user.email if claim and claim.user else None,
+            "rule_code": flag.rule_code,
+            "severity": flag.severity,
+            "details": flag.details,
+            "is_reviewed": flag.is_reviewed,
+            "reviewed_by": flag.reviewed_by,
+            "created_at": flag.created_at,
+        })
+    return result
+
+
+@router.put("/admin/fraud-flags/{flag_id}/review", summary="[Admin] Mark fraud flag as reviewed")
+def review_fraud_flag(
+    flag_id: int,
+    status: str,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    if status not in ["cleared", "confirmed", "pending"]:
+        raise HTTPException(status_code=400, detail="Status must be: cleared, confirmed, or pending")
+    flag = db.query(FraudFlag).filter(FraudFlag.id == flag_id).first()
+    if not flag:
+        raise HTTPException(status_code=404, detail="Flag not found")
+    flag.is_reviewed = status
+    flag.reviewed_by = current_user.name or current_user.email
+    db.commit()
+    db.refresh(flag)
+    return {"message": f"Flag marked as {status}", "flag_id": flag_id}
+
+
+@router.get("/admin/export/claims.csv", summary="[Admin] Export claims as CSV with optional date range")
+def export_claims_csv(
+    from_date: Optional[str] = None,
+    to_date: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    from datetime import datetime as dt
+    query = db.query(Claim)
+    if from_date:
+        try:
+            query = query.filter(Claim.created_at >= dt.strptime(from_date, "%Y-%m-%d"))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="from_date must be YYYY-MM-DD")
+    if to_date:
+        try:
+            query = query.filter(Claim.created_at <= dt.strptime(to_date + " 23:59:59", "%Y-%m-%d %H:%M:%S"))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="to_date must be YYYY-MM-DD")
+    claims = query.order_by(Claim.created_at.desc()).all()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "Claim Number", "User Name", "User Email",
+        "Claim Type", "Incident Date", "Amount Claimed", "Amount Approved",
+        "Status", "Admin Notes", "Fraud Flags", "Submitted At"
+    ])
+    for c in claims:
+        fraud_codes = ", ".join([f.rule_code for f in c.fraud_flags]) if c.fraud_flags else "None"
+        writer.writerow([
+            c.claim_number,
+            c.user.name if c.user else "",
+            c.user.email if c.user else "",
+            c.claim_type,
+            c.incident_date,
+            float(c.amount_claimed),
+            float(c.amount_approved) if c.amount_approved else "",
+            c.status,
+            c.admin_notes or "",
+            fraud_codes,
+            c.created_at.strftime("%Y-%m-%d %H:%M") if c.created_at else "",
+        ])
+    output.seek(0)
+    date_label = f"{from_date or 'all'}_to_{to_date or 'all'}"
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=claims_{date_label}.csv"}
+    )
+
+
+@router.get("/admin/{claim_id}", summary="[Admin] Get full claim details", response_model=ClaimWithDocs)
 def admin_get_claim(
     claim_id: int,
     db: Session = Depends(get_db),
@@ -270,23 +387,48 @@ def admin_get_claim(
 ):
     if not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Admin access required")
-    claim = crud_claim.get_claim_admin(db, claim_id)
+    from sqlalchemy.orm import joinedload
+    from app.models.user_policy import UserPolicy
+    from app.models.policy import Policy
+    
+    claim = (
+        db.query(Claim)
+        .options(
+            joinedload(Claim.user),
+            joinedload(Claim.user_policy).joinedload(UserPolicy.policy),
+            joinedload(Claim.fraud_flags),
+            joinedload(Claim.history)
+        )
+        .filter(Claim.id == claim_id)
+        .first()
+    )
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
-    docs = crud_claim.get_claim_documents(db, claim_id)
-    result = {
-        **claim.__dict__,
-        "documents": [
-            {
-                "id": d.id, 
-                "file_url": generate_presigned_url(d.file_url), 
-                "doc_type": d.doc_type, 
-                "uploaded_at": d.uploaded_at
-            }
-            for d in docs
-        ],
-    }
-    result.pop("_sa_instance_state", None)
+    
+    # Refresh documents with presigned URLs
+    db_docs = crud_claim.get_claim_documents(db, claim_id)
+    
+    # Use Pydantic to serialize but customize the documents list
+    result = ClaimWithDocs.model_validate(claim)
+    
+    # Manually populate fields that are not automatically mapped by model_validate 
+    # if they aren't direct attributes of the model or need specific casting
+    if claim.user:
+        result.user = UserMinimal.model_validate(claim.user)
+        
+    if claim.user_policy and claim.user_policy.policy:
+        result.policy = PolicyMinimal.model_validate(claim.user_policy.policy)
+
+    result.documents = [
+        ClaimDocumentOut(
+            id=d.id,
+            claim_id=d.claim_id,
+            file_url=generate_presigned_url(d.file_url),
+            doc_type=d.doc_type,
+            uploaded_at=d.uploaded_at
+        )
+        for d in db_docs
+    ]
     return result
 
 
@@ -301,10 +443,10 @@ def admin_review_claim(
     claim = crud_claim.get_claim_admin(db, claim_id)
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
-    
+
     if claim.status not in ["submitted"]:
         raise HTTPException(status_code=400, detail="Only submitted claims can be moved to under review")
-        
+
     updated_claim = crud_claim.admin_update_claim_status(db, claim, "under_review")
     send_claim_status_email_task.delay(updated_claim.user.email, updated_claim.claim_number, "under_review")
     return updated_claim
@@ -322,12 +464,13 @@ def admin_approve_claim(
     claim = crud_claim.get_claim_admin(db, claim_id)
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
-        
+
     if claim.status not in ["under_review"]:
         raise HTTPException(status_code=400, detail="Only claims under review can be approved")
-        
+
+    if data.amount_approved is None:
         raise HTTPException(status_code=400, detail="amount_approved is required to approve a claim")
-    
+
     updated_claim = crud_claim.admin_update_claim_status(
         db, claim, "approved",
         amount_approved=data.amount_approved,
@@ -349,10 +492,10 @@ def admin_reject_claim(
     claim = crud_claim.get_claim_admin(db, claim_id)
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
-        
+
     if claim.status not in ["submitted", "under_review"]:
         raise HTTPException(status_code=400, detail="Only submitted or under review claims can be rejected")
-        
+
     updated_claim = crud_claim.admin_update_claim_status(
         db, claim, "rejected", admin_notes=data.admin_notes
     )
@@ -371,10 +514,11 @@ def admin_pay_claim(
     claim = crud_claim.get_claim_admin(db, claim_id)
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
-        
+
     if claim.status not in ["approved"]:
         raise HTTPException(status_code=400, detail="Only approved claims can be marked as paid")
-        
+
     updated_claim = crud_claim.admin_update_claim_status(db, claim, "paid")
     send_claim_status_email_task.delay(updated_claim.user.email, updated_claim.claim_number, "paid")
     return updated_claim
+
