@@ -1,0 +1,9 @@
+{
+    "name": "Abhi",
+    "email": "test2@gmail.com",
+    "password": "Password@123",
+    "dob": "2003-02-02",
+    "gender": "male",
+    "occupation": "student",
+    "annual_income": 10000000.0
+}

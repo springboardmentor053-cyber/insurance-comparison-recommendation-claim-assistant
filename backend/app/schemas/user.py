@@ -52,7 +52,7 @@ class UserCreate(UserBase):
     marital_status: Optional[str] = None
     phone_number: Optional[str] = None
     address: Optional[str] = None
-    dob: Optional[str] = None
+    dob: Optional[date] = None
 
 
 class UserUpdate(UserBase):

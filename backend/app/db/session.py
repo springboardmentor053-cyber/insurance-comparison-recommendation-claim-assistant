@@ -4,9 +4,9 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.config import settings
 
-SQLALCHEMY_DATABASE_URL = settings.assemble_db_url()
+SQLALCHEMY_DATABASE_URL = "sqlite:///./insurance_db.db"
 
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={}
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

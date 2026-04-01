@@ -12,3 +12,5 @@ sqlalchemy-utils
 pypdf
 celery
 redis
+boto3
+python-dotenv

@@ -36,11 +36,7 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
 
     def assemble_db_url(self):
-        from urllib.parse import quote_plus
-        if self.DATABASE_URL:
-             return self.DATABASE_URL
-        encoded_password = quote_plus(self.POSTGRES_PASSWORD)
-        return f"postgresql://{self.POSTGRES_USER}:{encoded_password}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        return "sqlite:///./insurance_db.db"
 
     class Config:
         case_sensitive = True
