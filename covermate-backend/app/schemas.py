@@ -142,6 +142,7 @@ class ClaimResponse(BaseModel):
     incident_date: Optional[date] = None
     amount_claimed: Optional[Decimal] = None
     status: str
+    risk_score: Optional[int] = None
     created_at: datetime
     documents: List[ClaimDocumentResponse] = []
     status_history: List[ClaimStatusHistoryResponse] = []
@@ -197,16 +198,26 @@ class AdminUserPolicyWithUser(BaseModel):
     class Config:
         from_attributes = True
 
+class FraudFlagOut(BaseModel):
+    rule_code: str
+    severity: str
+    details: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
 class AdminClaimOut(BaseModel):
     id: int
     claim_number: Optional[str] = None
     claim_type: Optional[str] = None
     incident_date: Optional[date] = None
     amount_claimed: Optional[Decimal] = None
+    risk_score: Optional[int]
     status: str
     created_at: datetime
     documents: List[ClaimDocumentResponse] = []
     status_history: List[ClaimStatusHistoryResponse] = []
+    fraud_flags: List[FraudFlagOut] = []  
     user_policy: AdminUserPolicyWithUser
     class Config:
         from_attributes = True
