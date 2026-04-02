@@ -215,6 +215,8 @@ export default function Navbar() {
                         {[
                             { path: '/profile', label: 'My Profile', icon: '👤' },
                             { path: '/preferences', label: 'Preferences', icon: '⚙️' },
+                            { path: '/vehicle', label: 'Vehicle Lookup', icon: '🚗' },
+                            { path: '/network', label: 'Network Locator', icon: '📍' },
                         ].map((item) => (
                             <Link
                                 key={item.path}
@@ -254,6 +256,7 @@ export default function Navbar() {
                                         { path: '/admin', label: 'Admin Dashboard', icon: '🛡️' },
                                         { path: '/admin/claims', label: 'All Claims', icon: '📋' },
                                         { path: '/admin/fraud-flags', label: 'Fraud Flags', icon: '🚨' },
+                                        { path: '/admin/analytics', label: 'Analytics', icon: '⚡' },
                                     ].map((item) => (
                                         <Link
                                             key={item.path}

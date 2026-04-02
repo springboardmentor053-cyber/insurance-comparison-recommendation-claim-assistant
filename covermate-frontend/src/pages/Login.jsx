@@ -138,6 +138,16 @@ export default function Login() {
                         Create one
                     </Link>
                 </p>
+                <p style={{ textAlign: 'center', marginTop: '0.75rem' }}>
+                    <Link
+                        to="/admin/login"
+                        style={{ color: '#475569', fontSize: '0.75rem', textDecoration: 'none' }}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = '#94a3b8')}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = '#475569')}
+                    >
+                        Admin / Staff Login →
+                    </Link>
+                </p>
             </div>
         </div>
     );

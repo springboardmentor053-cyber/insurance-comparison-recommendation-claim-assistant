@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getFraudFlags, getAllClaims } from '../services/adminService';
+import { getAllFraudFlags, getAllClaims } from '../services/adminService';
 
 const RULE_META = {
     DUP_DOC:            { label: 'Duplicate Document', icon: '📄', color: '#ef4444' },
@@ -30,7 +30,7 @@ export default function AdminFraudFlags() {
     const [filterRule, setFilterRule] = useState('all');
 
     useEffect(() => {
-        Promise.all([getFraudFlags(), getAllClaims()])
+        Promise.all([getAllFraudFlags(), getAllClaims()])
             .then(([flagData, claimData]) => {
                 setFlags(flagData);
                 // Build a map of claim_id → claim object for quick lookup

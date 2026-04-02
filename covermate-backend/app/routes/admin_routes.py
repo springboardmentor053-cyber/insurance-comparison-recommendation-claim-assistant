@@ -286,3 +286,205 @@ Thank you for using CoverMate.
         "old_status": old_status,
         "new_status": body.status,
     }
+
+
+# ─────────────────── ACCEPT CLAIM ───────────────────
+@router.post("/claims/{claim_id}/accept")
+def accept_claim(
+    claim_id: int,
+    admin: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Admin approves a claim — sets status to 'approved' and emails user."""
+    claim = (
+        db.query(models.Claim)
+        .options(
+            joinedload(models.Claim.user_policy).joinedload(models.UserPolicy.user),
+            joinedload(models.Claim.user_policy).joinedload(models.UserPolicy.policy),
+        )
+        .filter(models.Claim.id == claim_id)
+        .first()
+    )
+    if not claim:
+        raise HTTPException(status_code=404, detail="Claim not found")
+    if claim.status not in ("submitted", "under_review"):
+        raise HTTPException(status_code=400, detail=f"Cannot approve claim in '{claim.status}' status")
+
+    claim.status = "approved"
+    db.add(models.AdminLog(
+        admin_id=admin.id, action=f"Accepted claim {claim.claim_number}",
+        target_type="claim", target_id=claim.id
+    ))
+    db.commit()
+
+    user = claim.user_policy.user
+    policy_title = claim.user_policy.policy.title if claim.user_policy.policy else "your policy"
+    dispatch_email(
+        user.email,
+        f"✅ Your Claim {claim.claim_number} has been Approved!",
+        f"Hello {user.name},\n\nGreat news! Your claim {claim.claim_number} for {policy_title} has been approved.\n\nPayout of ₹{claim.amount_claimed} will be processed shortly.\n\nThank you for trusting CoverMate.",
+    )
+    return {"message": "Claim approved", "claim_id": claim_id, "status": "approved"}
+
+
+# ─────────────────── REJECT CLAIM ───────────────────
+@router.post("/claims/{claim_id}/reject")
+def reject_claim(
+    claim_id: int,
+    body: schemas.ClaimRejectBody,
+    admin: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Admin rejects a claim — reason is mandatory, emails user with reason."""
+    claim = (
+        db.query(models.Claim)
+        .options(
+            joinedload(models.Claim.user_policy).joinedload(models.UserPolicy.user),
+            joinedload(models.Claim.user_policy).joinedload(models.UserPolicy.policy),
+        )
+        .filter(models.Claim.id == claim_id)
+        .first()
+    )
+    if not claim:
+        raise HTTPException(status_code=404, detail="Claim not found")
+    if claim.status not in ("submitted", "under_review"):
+        raise HTTPException(status_code=400, detail=f"Cannot reject claim in '{claim.status}' status")
+
+    claim.status = "rejected"
+    db.add(models.AdminLog(
+        admin_id=admin.id,
+        action=f"Rejected claim {claim.claim_number}. Reason: {body.reason}",
+        target_type="claim", target_id=claim.id
+    ))
+    db.commit()
+
+    user = claim.user_policy.user
+    policy_title = claim.user_policy.policy.title if claim.user_policy.policy else "your policy"
+    dispatch_email(
+        user.email,
+        f"❌ Update on Your Claim {claim.claim_number}",
+        f"Hello {user.name},\n\nWe regret to inform you that your claim {claim.claim_number} for {policy_title} has been rejected.\n\nReason: {body.reason}\n\nIf you believe this is incorrect, please contact our support team.\n\nThank you for using CoverMate.",
+    )
+    return {"message": "Claim rejected", "claim_id": claim_id, "status": "rejected", "reason": body.reason}
+
+
+# ─────────────────── REQUEST MORE INFO ───────────────────
+@router.post("/claims/{claim_id}/request-info")
+def request_more_info(
+    claim_id: int,
+    body: schemas.ClaimRequestInfoBody,
+    admin: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """Admin sends a custom message to the user requesting additional information/documents."""
+    claim = (
+        db.query(models.Claim)
+        .options(
+            joinedload(models.Claim.user_policy).joinedload(models.UserPolicy.user),
+        )
+        .filter(models.Claim.id == claim_id)
+        .first()
+    )
+    if not claim:
+        raise HTTPException(status_code=404, detail="Claim not found")
+
+    db.add(models.AdminLog(
+        admin_id=admin.id,
+        action=f"Requested info on claim {claim.claim_number}: {body.message}",
+        target_type="claim", target_id=claim.id
+    ))
+    db.commit()
+
+    user = claim.user_policy.user
+    dispatch_email(
+        user.email,
+        f"📋 Action Required — Claim {claim.claim_number}",
+        f"Hello {user.name},\n\nOur team is reviewing your claim {claim.claim_number} and needs additional information:\n\n{body.message}\n\nPlease log in to CoverMate and upload the required documents.\n\nThank you for your cooperation.",
+    )
+    return {"message": "Info request sent to user", "claim_id": claim_id}
+
+
+# ─────────────────── ANALYTICS: FRAUD BY SEVERITY ───────────────────
+@router.get("/analytics/fraud-by-severity")
+def analytics_fraud_by_severity(
+    admin: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """
+    Returns fraud flag counts grouped by severity for the Donut chart.
+    Response: [{ severity: 'high', count: 5 }, ...]
+    """
+    from sqlalchemy import func as sqlfunc
+    results = (
+        db.query(models.FraudFlag.severity, sqlfunc.count(models.FraudFlag.id).label("count"))
+        .group_by(models.FraudFlag.severity)
+        .all()
+    )
+    return [{"severity": r.severity, "count": r.count} for r in results]
+
+
+# ─────────────────── ANALYTICS: FLAGS OVER TIME ───────────────────
+@router.get("/analytics/flags-over-time")
+def analytics_flags_over_time(
+    admin: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """
+    Returns daily fraud flag counts for the last 30 days for the Bar chart.
+    Response: [{ date: '2024-03-01', count: 3 }, ...]
+    """
+    from sqlalchemy import func as sqlfunc
+    from datetime import datetime, timedelta
+
+    cutoff = datetime.utcnow() - timedelta(days=30)
+    results = (
+        db.query(
+            sqlfunc.date(models.FraudFlag.created_at).label("date"),
+            sqlfunc.count(models.FraudFlag.id).label("count"),
+        )
+        .filter(models.FraudFlag.created_at >= cutoff)
+        .group_by(sqlfunc.date(models.FraudFlag.created_at))
+        .order_by(sqlfunc.date(models.FraudFlag.created_at))
+        .all()
+    )
+    return [{"date": str(r.date), "count": r.count} for r in results]
+
+
+# ─────────────────── ANALYTICS: KPIs ───────────────────
+@router.get("/analytics/kpis")
+def analytics_kpis(
+    admin: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    """
+    Returns high-level KPIs:
+    - pending_claims: submitted + under_review count
+    - settlement_ratio: approved / (approved + rejected) * 100
+    - total_payouts_this_month: sum of amount_claimed for 'paid' claims this calendar month
+    """
+    from sqlalchemy import func as sqlfunc
+    from datetime import datetime
+
+    now = datetime.utcnow()
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    pending = db.query(models.Claim).filter(
+        models.Claim.status.in_(["submitted", "under_review"])
+    ).count()
+
+    approved_count = db.query(models.Claim).filter(models.Claim.status == "approved").count()
+    rejected_count = db.query(models.Claim).filter(models.Claim.status == "rejected").count()
+    decided = approved_count + rejected_count
+    settlement_ratio = round((approved_count / decided * 100), 1) if decided > 0 else 0.0
+
+    payouts_result = db.query(sqlfunc.sum(models.Claim.amount_claimed)).filter(
+        models.Claim.status == "paid",
+        models.Claim.created_at >= month_start,
+    ).scalar()
+    total_payouts = float(payouts_result or 0)
+
+    return {
+        "pending_claims": pending,
+        "settlement_ratio": settlement_ratio,
+        "total_payouts_this_month": total_payouts,
+    }

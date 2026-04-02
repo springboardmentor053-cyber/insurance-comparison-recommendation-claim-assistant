@@ -19,6 +19,10 @@ import ClaimDetails from './pages/ClaimDetails';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminClaims from './pages/AdminClaims';
 import AdminFraudFlags from './pages/AdminFraudFlags';
+import AdminAnalytics from './pages/AdminAnalytics';
+import AdminLogin from './pages/AdminLogin';
+import VehicleLookup from './pages/VehicleLookup';
+import NetworkLocator from './pages/NetworkLocator';
 
 // Guard: only allows users with role === 'admin'
 function AdminRoute({ children }) {
@@ -37,6 +41,7 @@ export default function App() {
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
 
           {/* Protected Routes */}
           <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
@@ -55,6 +60,11 @@ export default function App() {
           <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
           <Route path="/admin/claims" element={<AdminRoute><AdminClaims /></AdminRoute>} />
           <Route path="/admin/fraud-flags" element={<AdminRoute><AdminFraudFlags /></AdminRoute>} />
+          <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
+
+          {/* Customer feature routes */}
+          <Route path="/vehicle" element={<ProtectedRoute><VehicleLookup /></ProtectedRoute>} />
+          <Route path="/network" element={<ProtectedRoute><NetworkLocator /></ProtectedRoute>} />
 
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" replace />} />

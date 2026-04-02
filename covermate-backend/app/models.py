@@ -125,11 +125,14 @@ class UserPolicy(Base):
     premium = Column(Numeric, nullable=True)
     status = Column(UserPolicyStatusEnum, default='active')
     auto_renew = Column(Boolean, default=False)
+    pdf_url = Column(String, nullable=True)             # generated policy PDF link
 
     # Relationships
     user = relationship("User", back_populates="user_policies")
     policy = relationship("Policy", back_populates="user_policies")
     claims = relationship("Claim", back_populates="user_policy")
+    addons = relationship("UserPolicyAddon", back_populates="user_policy")
+    endorsements = relationship("PolicyEndorsement", back_populates="user_policy")
 
 
 # ━━━━━━━━━━━━━━━━━ CLAIMS ━━━━━━━━━━━━━━━━━
@@ -223,3 +226,82 @@ class AdminLog(Base):
 
     # Relationships
     admin = relationship("User", back_populates="admin_logs")
+
+
+# ━━━━━━━━━━━━━━━━━ POLICY ADD-ONS ━━━━━━━━━━━━━━━━━
+class PolicyAddon(Base):
+    """
+    Catalog of optional add-ons/riders available for a specific policy.
+    e.g. Zero Depreciation, Engine Protection, Consumables Cover.
+    extra_premium is added on top of the base premium.
+    """
+    __tablename__ = "policy_addons"
+
+    id = Column(Integer, primary_key=True, index=True)
+    policy_id = Column(Integer, ForeignKey("policies.id"), nullable=False)
+    name = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    extra_premium = Column(Numeric, default=0)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    policy = relationship("Policy")
+    user_selections = relationship("UserPolicyAddon", back_populates="addon")
+
+
+# ━━━━━━━━━━━━━━━━━ USER POLICY ADD-ONS ━━━━━━━━━━━━━━━━━
+class UserPolicyAddon(Base):
+    """Add-ons selected by a user for one of their enrolled policies."""
+    __tablename__ = "user_policy_addons"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_policy_id = Column(Integer, ForeignKey("user_policies.id"), nullable=False)
+    addon_id = Column(Integer, ForeignKey("policy_addons.id"), nullable=False)
+    added_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    user_policy = relationship("UserPolicy", back_populates="addons")
+    addon = relationship("PolicyAddon", back_populates="user_selections")
+
+
+# ━━━━━━━━━━━━━━━━━ NETWORK PROVIDERS ━━━━━━━━━━━━━━━━━
+class NetworkProvider(Base):
+    """
+    Cashless network hospitals (for health policies) and
+    network garages (for auto policies).
+    Searchable by pincode and type.
+    """
+    __tablename__ = "network_providers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    provider_type = Column(String, nullable=False)   # 'hospital' | 'garage'
+    address = Column(Text, nullable=True)
+    city = Column(String, nullable=True)
+    state = Column(String, nullable=True)
+    pincode = Column(String, nullable=True, index=True)
+    phone = Column(String, nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+# ━━━━━━━━━━━━━━━━━ POLICY ENDORSEMENTS ━━━━━━━━━━━━━━━━━
+class PolicyEndorsement(Base):
+    """
+    A user-requested modification to an active policy.
+    Types: address_change, nominee_change, vehicle_change, other.
+    Admin reviews and approves/rejects.
+    """
+    __tablename__ = "policy_endorsements"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_policy_id = Column(Integer, ForeignKey("user_policies.id"), nullable=False)
+    request_type = Column(String, nullable=False)    # address_change, nominee_change, etc.
+    details = Column(Text, nullable=True)            # free-text description of the change
+    status = Column(String, default='pending')       # pending | approved | rejected
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relationships
+    user_policy = relationship("UserPolicy", back_populates="endorsements")

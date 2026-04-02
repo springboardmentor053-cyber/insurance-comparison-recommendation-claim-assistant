@@ -1,7 +1,8 @@
 # ─── Python / Backend ───
-__pycache__/
+**/__pycache__/
 *.pyc
 *.pyo
+*.pyd
 venv/
 .env
 uploads/
@@ -22,7 +23,9 @@ dist/
 Thumbs.db
 desktop.ini
 
-# ─── Test artifacts ───
+# ─── Test / Scratch artifacts ───
 test_qa.py
 test.txt
 pdf_content.txt
+seed_new.py
+walkthrough.md

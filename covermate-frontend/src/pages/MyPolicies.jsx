@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getMyPolicies, cancelPolicy } from '../services/policyService';
+import api from '../services/api';
+import { API_URL } from '../services/api';
 
 const STATUS_STYLES = {
     active: { color: '#22c55e', bg: 'rgba(34,197,94,0.1)', label: 'Active' },
@@ -31,6 +33,13 @@ export default function MyPolicies() {
     const [cancelling, setCancelling] = useState(null);
     const [confirmId, setConfirmId] = useState(null);
     const [toast, setToast] = useState('');
+    // New: PDF, Renew, Endorse
+    const [pdfLoading,  setPdfLoading]  = useState(null);
+    const [renewLoading, setRenewLoading] = useState(null);
+    const [endorsePolicy, setEndorsePolicy] = useState(null);  // {id, number}
+    const [endorseType,  setEndorseType]  = useState('address_change');
+    const [endorseDetails, setEndorseDetails] = useState('');
+    const [endorseSending, setEndorseSending] = useState(false);
 
     const load = () => {
         setLoading(true);
@@ -58,6 +67,50 @@ export default function MyPolicies() {
         } finally {
             setCancelling(null);
             setConfirmId(null);
+        }
+    };
+
+    const handleGeneratePDF = async (upId) => {
+        setPdfLoading(upId);
+        try {
+            const { data } = await api.post(`/user-policies/${upId}/generate-pdf`);
+            // open the PDF in a new tab
+            window.open(`http://localhost:8000${data.pdf_url}`, '_blank');
+            showToast('📄 Policy document ready!');
+        } catch (err) {
+            showToast(err?.response?.data?.detail || '❌ Failed to generate PDF.');
+        } finally {
+            setPdfLoading(null);
+        }
+    };
+
+    const handleRenew = async (upId) => {
+        setRenewLoading(upId);
+        try {
+            await api.post(`/user-policies/${upId}/renew`);
+            showToast('🔄 Policy renewed successfully!');
+            load();
+        } catch (err) {
+            showToast(err?.response?.data?.detail || '❌ Renewal failed.');
+        } finally {
+            setRenewLoading(null);
+        }
+    };
+
+    const handleEndorse = async () => {
+        if (!endorseDetails.trim() || !endorsePolicy) return;
+        setEndorseSending(true);
+        try {
+            await api.post(`/user-policies/${endorsePolicy.id}/endorse`, {
+                request_type: endorseType,
+                details: endorseDetails.trim(),
+            });
+            showToast('✏️ Endorsement request submitted!');
+            setEndorsePolicy(null); setEndorseDetails(''); setEndorseType('address_change');
+        } catch (err) {
+            showToast(err?.response?.data?.detail || '❌ Failed to submit endorsement.');
+        } finally {
+            setEndorseSending(false);
         }
     };
 
@@ -117,6 +170,37 @@ export default function MyPolicies() {
                                     }}
                                 >
                                     {cancelling === confirmId ? 'Cancelling…' : 'Yes, Cancel'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Endorsement Modal */}
+                {endorsePolicy && (
+                    <div style={{ position:'fixed', inset:0, zIndex:9998, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem' }}>
+                        <div className="glass-card" style={{ padding:'2rem', maxWidth:'400px', width:'100%' }}>
+                            <h3 style={{ fontWeight:800, color:'#e0e0ff', marginBottom:'0.25rem' }}>✏️ Request Policy Change</h3>
+                            <p style={{ color:'#6868a0', fontSize:'0.8125rem', marginBottom:'1.25rem' }}>Policy #{endorsePolicy.number}</p>
+                            <label style={{ display:'block', fontSize:'0.75rem', fontWeight:600, color:'#9898cc', marginBottom:'0.375rem', textTransform:'uppercase', letterSpacing:'0.05em' }}>Type of Change</label>
+                            <select value={endorseType} onChange={e => setEndorseType(e.target.value)}
+                                style={{ width:'100%', padding:'0.625rem 0.875rem', borderRadius:'0.625rem', border:'1px solid rgba(124,58,237,0.2)', background:'rgba(15,15,40,0.8)', color:'#e0e0ff', fontSize:'0.875rem', marginBottom:'1rem', fontFamily:'inherit' }}>
+                                <option value="address_change">Address Change</option>
+                                <option value="nominee_change">Nominee Change</option>
+                                <option value="vehicle_change">Vehicle Change</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <label style={{ display:'block', fontSize:'0.75rem', fontWeight:600, color:'#9898cc', marginBottom:'0.375rem', textTransform:'uppercase', letterSpacing:'0.05em' }}>Details</label>
+                            <textarea value={endorseDetails} onChange={e => setEndorseDetails(e.target.value)} rows={4}
+                                placeholder="Describe the change you need…"
+                                style={{ width:'100%', padding:'0.75rem', borderRadius:'0.625rem', border:'1px solid rgba(124,58,237,0.2)', background:'rgba(124,58,237,0.06)', color:'#e0e0ff', fontSize:'0.875rem', resize:'vertical', outline:'none', fontFamily:'inherit', boxSizing:'border-box', marginBottom:'1.25rem' }}
+                            />
+                            <div style={{ display:'flex', gap:'0.75rem' }}>
+                                <button onClick={() => { setEndorsePolicy(null); setEndorseDetails(''); }}
+                                    style={{ flex:1, padding:'0.625rem', borderRadius:'0.625rem', background:'transparent', border:'1px solid rgba(100,100,130,0.3)', color:'#9898cc', cursor:'pointer', fontSize:'0.875rem' }}>Cancel</button>
+                                <button onClick={handleEndorse} disabled={!endorseDetails.trim() || endorseSending}
+                                    style={{ flex:1, padding:'0.625rem', borderRadius:'0.625rem', background:'rgba(124,58,237,0.2)', border:'1px solid rgba(124,58,237,0.4)', color:'#c4b5fd', fontWeight:700, cursor:'pointer', fontSize:'0.875rem', opacity:(!endorseDetails.trim()||endorseSending)?0.5:1 }}>
+                                    {endorseSending ? 'Submitting…' : 'Submit Request'}
                                 </button>
                             </div>
                         </div>
@@ -236,30 +320,36 @@ export default function MyPolicies() {
 
                                         {/* Actions */}
                                         {up.status === 'active' && (
-                                            <div style={{ marginTop: '1.25rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                                            <div style={{ marginTop: '1.25rem', display: 'flex', gap: '0.625rem', flexWrap: 'wrap' }}>
                                                 <button
                                                     onClick={() => navigate(`/quote?policy_id=${up.policy_id}`)}
-                                                    style={{
-                                                        padding: '0.625rem 1.25rem',
-                                                        background: 'rgba(99,102,241,0.08)',
-                                                        border: '1px solid rgba(99,102,241,0.2)',
-                                                        borderRadius: '0.625rem', color: '#818cf8',
-                                                        fontSize: '0.8125rem', fontWeight: 500,
-                                                        cursor: 'pointer', fontFamily: 'inherit',
-                                                    }}
+                                                    style={{ padding:'0.5rem 1rem', background:'rgba(99,102,241,0.08)', border:'1px solid rgba(99,102,241,0.2)', borderRadius:'0.625rem', color:'#818cf8', fontSize:'0.8125rem', fontWeight:500, cursor:'pointer', fontFamily:'inherit' }}
                                                 >
                                                     Recalculate Quote
                                                 </button>
                                                 <button
+                                                    onClick={() => handleGeneratePDF(up.id)}
+                                                    disabled={pdfLoading === up.id}
+                                                    style={{ padding:'0.5rem 1rem', background:'rgba(124,58,237,0.1)', border:'1px solid rgba(124,58,237,0.25)', borderRadius:'0.625rem', color:'#c4b5fd', fontSize:'0.8125rem', fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}
+                                                >
+                                                    {pdfLoading === up.id ? '⏳ Generating…' : '📄 Download Policy'}
+                                                </button>
+                                                <button
+                                                    onClick={() => handleRenew(up.id)}
+                                                    disabled={renewLoading === up.id}
+                                                    style={{ padding:'0.5rem 1rem', background:'rgba(34,197,94,0.1)', border:'1px solid rgba(34,197,94,0.25)', borderRadius:'0.625rem', color:'#4ade80', fontSize:'0.8125rem', fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}
+                                                >
+                                                    {renewLoading === up.id ? '⏳ Renewing…' : '🔄 Renew'}
+                                                </button>
+                                                <button
+                                                    onClick={() => setEndorsePolicy({ id: up.id, number: up.policy_number })}
+                                                    style={{ padding:'0.5rem 1rem', background:'rgba(234,179,8,0.1)', border:'1px solid rgba(234,179,8,0.25)', borderRadius:'0.625rem', color:'#fbbf24', fontSize:'0.8125rem', fontWeight:600, cursor:'pointer', fontFamily:'inherit' }}
+                                                >
+                                                    ✏️ Request Change
+                                                </button>
+                                                <button
                                                     onClick={() => setConfirmId(up.id)}
-                                                    style={{
-                                                        padding: '0.625rem 1.25rem',
-                                                        background: 'rgba(239,68,68,0.08)',
-                                                        border: '1px solid rgba(239,68,68,0.2)',
-                                                        borderRadius: '0.625rem', color: '#f87171',
-                                                        fontSize: '0.8125rem', fontWeight: 500,
-                                                        cursor: 'pointer', fontFamily: 'inherit',
-                                                    }}
+                                                    style={{ padding:'0.5rem 1rem', background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', borderRadius:'0.625rem', color:'#f87171', fontSize:'0.8125rem', fontWeight:500, cursor:'pointer', fontFamily:'inherit' }}
                                                 >
                                                     Cancel Policy
                                                 </button>

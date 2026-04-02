@@ -268,3 +268,94 @@ class ClaimResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# ━━━━━━━━━━━━━━━━━ ADMIN ACTION SCHEMAS ━━━━━━━━━━━━━━━━━
+
+class ClaimRejectBody(BaseModel):
+    """Admin rejects a claim — reason is mandatory."""
+    reason: str
+
+class ClaimRequestInfoBody(BaseModel):
+    """Admin requests more info from the user."""
+    message: str
+
+
+# ━━━━━━━━━━━━━━━━━ POLICY ADD-ON SCHEMAS ━━━━━━━━━━━━━━━━━
+
+class PolicyAddonResponse(BaseModel):
+    id: int
+    policy_id: int
+    name: str
+    description: Optional[str] = None
+    extra_premium: float
+    is_active: bool
+
+    class Config:
+        from_attributes = True
+
+class UserPolicyAddonCreate(BaseModel):
+    addon_id: int
+
+class UserPolicyAddonResponse(BaseModel):
+    id: int
+    addon_id: int
+    addon: Optional[PolicyAddonResponse] = None
+    added_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+# ━━━━━━━━━━━━━━━━━ NETWORK PROVIDER SCHEMAS ━━━━━━━━━━━━━━━━━
+
+class NetworkProviderResponse(BaseModel):
+    id: int
+    name: str
+    provider_type: str
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    pincode: Optional[str] = None
+    phone: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+# ━━━━━━━━━━━━━━━━━ VEHICLE LOOKUP SCHEMAS ━━━━━━━━━━━━━━━━━
+
+class VehicleInfo(BaseModel):
+    reg_number: str
+    make: str
+    model: str
+    year: int
+    fuel_type: str
+    rto_code: str
+    rto_city: str
+    vehicle_class: str
+
+
+# ━━━━━━━━━━━━━━━━━ ENDORSEMENT SCHEMAS ━━━━━━━━━━━━━━━━━
+
+class EndorsementCreate(BaseModel):
+    request_type: str   # address_change | nominee_change | vehicle_change | other
+    details: str
+
+class EndorsementResponse(BaseModel):
+    id: int
+    user_policy_id: int
+    request_type: str
+    details: Optional[str] = None
+    status: str
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+# ━━━━━━━━━━━━━━━━━ POLICY PDF / RENEWAL SCHEMAS ━━━━━━━━━━━━━━━━━
+
+class PolicyPDFResponse(BaseModel):
+    pdf_url: str
+    message: str

@@ -1,38 +1,25 @@
 import api from './api';
 
-// ─── Dashboard Stats ───
-export const getAdminDashboard = async () => {
-    const res = await api.get('/admin/dashboard');
-    return res.data;
-};
+// ── Dashboard & Stats ──
+export const getAdminDashboard  = ()   => api.get('/admin/dashboard').then(r => r.data);
+export const getAllClaims        = ()   => api.get('/admin/claims').then(r => r.data);
+export const getAllFraudFlags    = ()   => api.get('/admin/fraud-flags').then(r => r.data);
+export const exportClaimsCSV    = ()   => `${api.defaults.baseURL}/admin/claims/export`;
 
-// ─── All Claims ───
-export const getAllClaims = async () => {
-    const res = await api.get('/admin/claims');
-    return res.data;
-};
+// ── Analytics ──
+export const getAnalyticsFraudBySeverity = () =>
+    api.get('/admin/analytics/fraud-by-severity').then(r => r.data);
+export const getAnalyticsFlagsOverTime = () =>
+    api.get('/admin/analytics/flags-over-time').then(r => r.data);
+export const getAnalyticsKPIs = () =>
+    api.get('/admin/analytics/kpis').then(r => r.data);
 
-// ─── Update Claim Status ───
-export const updateClaimStatus = async (claimId, newStatus) => {
-    const res = await api.put(`/admin/claims/${claimId}/status`, { status: newStatus });
-    return res.data;
-};
-
-// ─── Fraud Flags ───
-export const getFraudFlags = async () => {
-    const res = await api.get('/admin/fraud-flags');
-    return res.data;
-};
-
-// ─── Export Claims CSV ───
-export const exportClaimsCSV = async () => {
-    const res = await api.get('/admin/claims/export', { responseType: 'blob' });
-    const url = window.URL.createObjectURL(new Blob([res.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'claims_export.csv');
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
-};
+// ── Claim Actions ──
+export const updateClaimStatus = (id, status) =>
+    api.put(`/admin/claims/${id}/status`, { status }).then(r => r.data);
+export const acceptClaim = (id) =>
+    api.post(`/admin/claims/${id}/accept`).then(r => r.data);
+export const rejectClaim = (id, reason) =>
+    api.post(`/admin/claims/${id}/reject`, { reason }).then(r => r.data);
+export const requestMoreInfo = (id, message) =>
+    api.post(`/admin/claims/${id}/request-info`, { message }).then(r => r.data);
