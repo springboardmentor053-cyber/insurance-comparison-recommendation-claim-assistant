@@ -146,6 +146,7 @@ class Claim(Base):
     claim_type = Column(String, nullable=True)
     incident_date = Column(Date, nullable=True)
     amount_claimed = Column(Numeric, nullable=True)
+    risk_score = Column(Integer, default=0)
     status = Column(ClaimStatusEnum, default='draft')
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
