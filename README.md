@@ -439,44 +439,39 @@ Shows all claims and fraud flagged claims.
 
 ## 📸 Application Screenshots
 
-### Admin Claims Dashboard
-Shows all claims and fraud flagged claims.
+### User Login
 
-![Admin Dashboard](images/admin_dashboard.png)
+<img width="1919" height="1125" alt="Screenshot 2026-04-03 013303" src="https://github.com/user-attachments/assets/1e5e782e-efc2-42ca-aa65-a380091206d2" />
 
-### Fraud Detection Alerts
-Claims automatically flagged as suspicious.
+### User Dashboard
+<img width="1919" height="1121" alt="image" src="https://github.com/user-attachments/assets/58859af2-c93e-4fe8-9c36-f44ef9f32c99" />
 
-![Fraud Flags](images/fraud_flags.png)
+### Policy Comparison
 
-### Fraud Analytics
-Admin analytics showing fraud statistics and risk indicators.
+<img width="1919" height="1118" alt="Screenshot 2026-04-03 013612" src="https://github.com/user-attachments/assets/3b724010-532b-4477-9d92-d9e5c737b083" />
 
-![Fraud Analytics](images/fraud_analytics.png)
+### Policy Recommendation
 
-### Claims Management
-Admin reviewing claims and their status.
 
-![Claims Review](images/claims_review.png)
+ <img width="1919" height="1125" alt="Screenshot 2026-04-03 013702" src="https://github.com/user-attachments/assets/509ff2b5-78f2-4c5f-8a1c-19f0fa165ac4" />
 
----
+### File Insurance Claim and Claim Life cycle
 
-### Fraud Detection Alerts
-Claims automatically flagged as suspicious.
+<img width="1898" height="1121" alt="Screenshot 2026-04-03 013843" src="https://github.com/user-attachments/assets/dd7fee64-4654-424b-85f2-6b38e838b805" />
 
-![Fraud Flags](images/fraud_flags.png)
 
-### Fraud Analytics
-Admin analytics showing fraud statistics and risk indicators.
+<img width="1919" height="1120" alt="Screenshot 2026-04-03 013853" src="https://github.com/user-attachments/assets/362c0be4-03b3-4c4f-b396-63e3edf750be" />
 
-![Fraud Analytics](images/fraud_analytics.png)
 
-### Claims Management
-Admin reviewing claims and their status.
+<img width="1919" height="1113" alt="Screenshot 2026-04-03 013909" src="https://github.com/user-attachments/assets/440b6a13-9711-459f-b6f5-b2f02b9d55d5" />
 
-![Claims Review](images/claims_review.png)
+<img width="1919" height="1117" alt="Screenshot 2026-04-03 013934" src="https://github.com/user-attachments/assets/03a577b2-1ccc-473f-98f9-c7ce5e13ac79" />
 
----
+### Admin Monitoring Dashboard
+
+<img width="1907" height="1134" alt="Screenshot 2026-04-03 012719" src="https://github.com/user-attachments/assets/77490cee-ddfb-4841-ad09-b35df2ceb9cc" />
+png)
+
 
 ## 📖 Glossary for Beginners
 
