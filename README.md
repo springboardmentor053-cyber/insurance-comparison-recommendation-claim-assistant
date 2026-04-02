@@ -404,7 +404,7 @@ curl -X PUT http://localhost:8001/auth/change-password \
 | **B** | Policy Catalog, Compare & Quote | ✅ Complete | Browse policies, side-by-side comparison, premium calculators |
 | **C** | Recommendation Engine | ✅ Complete | Score policies based on user's risk profile |
 | **D** | Claims (filing, documents, tracking) |  ✅ Complete | File claims, upload documents, track status |
-| **E** | Fraud Rules & Admin Analytics | ⬜ Planned | Auto-flag suspicious claims, admin dashboards |
+| **E** | Fraud Rules & Admin Analytics | ✅ Complete | Auto-flag suspicious claims, admin dashboards |
 
 ### 8-Week Milestone Plan
 | Weeks | Milestone | Key Deliverables |
