@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-
 const API = "http://127.0.0.1:8000";
 const authH = () => ({ Authorization: `Bearer ${localStorage.getItem("access_token")}` });
 
@@ -179,7 +178,36 @@ function ClaimDetail({ claim, onUpdated, onClear }) {
           <InfoBox label="Incident Date"  value={fd(claim.incident_date)} />
           <InfoBox label="Amount Claimed" value={fa(claim.amount_claimed)} full big accent="#fbbf24" />
         </div>
+         {/* Fraud Alerts */}
+{claim.fraud_flags && claim.fraud_flags.length > 0 && (
+  <>
+    <Sec title="Fraud Alerts" />
 
+    <div style={{
+      background:"rgba(248,113,113,0.06)",
+      border:"1px solid rgba(248,113,113,0.25)",
+      borderRadius:10,
+      padding:"12px 14px",
+      display:"flex",
+      flexDirection:"column",
+      gap:6
+    }}>
+      {claim.fraud_flags.map(flag => (
+        <div
+          key={flag.id}
+          style={{
+            fontSize:12,
+            fontWeight:700,
+            color:"#f87171",
+            fontFamily:"'JetBrains Mono',monospace"
+          }}
+        >
+          ⚠ {flag.rule_code}
+        </div>
+      ))}
+    </div>
+  </>
+)}
         {/* Documents */}
         <Sec title={`Documents (${docs.length})`} />
         {docs.length===0
@@ -381,6 +409,7 @@ function EmptyDetail({ tab }) {
 export default function AdminDashboard() {
   const [tab, setTab]           = useState("claims");
   const [stats, setStats]       = useState(null);
+  const [fraudStats, setFraudStats] = useState(null);
   const [claims, setClaims]     = useState([]);
   const [policies, setPolicies] = useState([]);
   const [filter, setFilter]     = useState("");
@@ -396,12 +425,14 @@ export default function AdminDashboard() {
     try {
       const pUrl = `${API}/admin/user-policies${filter&&tab==="policies"?`?status=${filter}`:""}`;
       const cUrl = `${API}/admin/claims${filter&&tab==="claims"?`?status=${filter}`:""}`;
-      const [s,p,c] = await Promise.all([
+      const [s,p,c,f] = await Promise.all([
         axios.get(`${API}/admin/dashboard`,{ headers:authH() }),
         axios.get(pUrl,{ headers:authH() }),
         axios.get(cUrl,{ headers:authH() }),
+        axios.get(`${API}/admin/fraud-analytics`,{ headers:authH() }),
       ]);
       setStats(s.data); setPolicies(p.data); setClaims(c.data);
+      setFraudStats(f.data);
     } catch { showToast("err","Failed to load data"); }
     finally { setLoading(false); }
   }, [filter, tab]);
@@ -453,19 +484,40 @@ export default function AdminDashboard() {
               </button>
             ))}
 
-            {stats && (
-              <>
-                <div style={{ fontSize:8.5, fontWeight:800, textTransform:"uppercase", letterSpacing:"0.14em", color:"#111827", padding:"0 8px", margin:"20px 0 8px" }}>Overview</div>
-                <div style={{ background:"rgba(255,255,255,0.01)", border:"1px solid rgba(255,255,255,0.04)", borderRadius:9, overflow:"hidden" }}>
-                  {[["Users",stats.total_users,"#818cf8"],["Policies",stats.total_user_policies,"#4ade80"],["Claims",stats.total_claims,"#fbbf24"],["Pending",stats.pending_claims,"#f59e0b"],["In Review",stats.under_review_claims,"#e879f9"]].map(([k,v,c],i)=>(
-                    <div key={k} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"8px 12px", borderBottom:i<4?"1px solid rgba(255,255,255,0.03)":"none" }}>
-                      <span style={{ fontSize:11.5, color:"#2d3748", fontFamily:"'Sora',sans-serif" }}>{k}</span>
-                      <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, fontWeight:700, color:c }}>{v}</span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
+          {stats && (
+  <>
+    <div style={{ fontSize:8.5, fontWeight:800, textTransform:"uppercase", letterSpacing:"0.14em", color:"#111827", padding:"0 8px", margin:"20px 0 8px" }}>
+      Overview
+    </div>
+
+    <div style={{ background:"rgba(255,255,255,0.01)", border:"1px solid rgba(255,255,255,0.04)", borderRadius:9, overflow:"hidden" }}>
+
+      {[
+        ["Users",stats.total_users,"#818cf8"],
+        ["Policies",stats.total_user_policies,"#4ade80"],
+        ["Claims",stats.total_claims,"#fbbf24"],
+        ["Pending",stats.pending_claims,"#f59e0b"],
+        ["Fraud Claims",fraudStats?.fraud_claims || 0,"#f87171"],
+        ["Fraud Rate",`${fraudStats?.fraud_rate_percent || 0}%`,"#ef4444"]
+      ].map(([k,v,c],i)=>(
+        <div
+          key={k}
+          style={{
+            display:"flex",
+            justifyContent:"space-between",
+            alignItems:"center",
+            padding:"8px 12px",
+            borderBottom:i<5?"1px solid rgba(255,255,255,0.03)":"none"
+          }}
+        >
+          <span style={{ fontSize:11.5, color:"#2d3748", fontFamily:"'Sora',sans-serif" }}>{k}</span>
+          <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, fontWeight:700, color:c }}>{v}</span>
+        </div>
+      ))}
+
+    </div>
+  </>
+)}
           </div>
 
           {/* MIDDLE: List */}
@@ -534,9 +586,42 @@ export default function AdminDashboard() {
                         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:8 }}>
                           <div style={{ flex:1, minWidth:0 }}>
                             <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:5 }}>
-                              <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, fontWeight:700, color:isSel?"#818cf8":"#e2e8f0" }}>{c.claim_number}</span>
-                              <Badge status={c.status} />
-                            </div>
+                               <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, fontWeight:700, color:isSel?"#818cf8":"#e2e8f0" }}>
+                                  {c.claim_number}
+                                 </span>
+
+                                 <Badge status={c.status} />
+
+{/* Risk Score Indicator */}
+{c.risk_score > 70 && (
+  <span style={{fontSize:11,fontWeight:700,color:"#ef4444"}}>🔴 High Risk</span>
+)}
+
+{c.risk_score > 40 && c.risk_score <= 70 && (
+  <span style={{fontSize:11,fontWeight:700,color:"#f97316"}}>🟠 Medium Risk</span>
+)}
+
+{c.risk_score > 0 && c.risk_score <= 40 && (
+  <span style={{fontSize:11,fontWeight:700,color:"#22c55e"}}>🟢 Low Risk</span>
+)}
+
+{/* Fraud Flag */}
+
+
+{c.fraud_flags?.length > 0 && (
+  <span style={{
+    fontSize:11,
+    fontWeight:700,
+    color:"#f87171",
+    background:"rgba(248,113,113,0.1)",
+    border:"1px solid rgba(248,113,113,0.25)",
+    padding:"2px 6px",
+    borderRadius:6
+  }}>
+    ⚠ Fraud
+  </span>
+)}
+                                  </div>
                             <div style={{ fontSize:13, fontWeight:600, color:"#cbd5e1", textTransform:"capitalize", marginBottom:4, fontFamily:"'Sora',sans-serif" }}>{c.claim_type||"General Claim"}</div>
                             <div style={{ display:"flex", alignItems:"center", gap:10, flexWrap:"wrap" }}>
                               {c.user_policy?.user?.name && (
