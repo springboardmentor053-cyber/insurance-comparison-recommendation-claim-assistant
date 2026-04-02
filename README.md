@@ -428,6 +428,56 @@ curl -X PUT http://localhost:8001/auth/change-password \
 - Policy Comparison UI
 - Recommendation Engine based on user profile
 
+
+## 📸 Application Screenshots
+
+### Admin Claims Dashboard
+Shows all claims and fraud flagged claims.
+
+
+
+
+## 📸 Application Screenshots
+
+### Admin Claims Dashboard
+Shows all claims and fraud flagged claims.
+
+![Admin Dashboard](images/admin_dashboard.png)
+
+### Fraud Detection Alerts
+Claims automatically flagged as suspicious.
+
+![Fraud Flags](images/fraud_flags.png)
+
+### Fraud Analytics
+Admin analytics showing fraud statistics and risk indicators.
+
+![Fraud Analytics](images/fraud_analytics.png)
+
+### Claims Management
+Admin reviewing claims and their status.
+
+![Claims Review](images/claims_review.png)
+
+---
+
+### Fraud Detection Alerts
+Claims automatically flagged as suspicious.
+
+![Fraud Flags](images/fraud_flags.png)
+
+### Fraud Analytics
+Admin analytics showing fraud statistics and risk indicators.
+
+![Fraud Analytics](images/fraud_analytics.png)
+
+### Claims Management
+Admin reviewing claims and their status.
+
+![Claims Review](images/claims_review.png)
+
+---
+
 ## 📖 Glossary for Beginners
 
 | Term | Explanation |
