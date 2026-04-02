@@ -7,6 +7,7 @@ Claim lifecycle:
 
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
+from datetime import datetime
 
 from app.database import get_db
 from app import models, schemas
@@ -34,6 +35,66 @@ def generate_claim_number(claim_id: int) -> str:
     return f"CLM-{claim_id:05d}"
 
 
+
+
+# ─────────────────── FRAUD ENGINE ───────────────────
+def run_fraud_checks(claim: models.Claim, db: Session):
+
+    fraud_flags = []
+    risk_score = 0
+
+    # Rule 1 — High Claim Amount
+    if claim.amount_claimed and claim.amount_claimed > 100000:
+        risk_score += 50
+        fraud_flags.append(
+            models.FraudFlag(
+                claim_id=claim.id,
+                rule_code="HIGH_AMOUNT",
+                severity="high",
+                details="Claim exceeds ₹100000"
+            )
+        )
+
+    # Rule 2 — Early Claim
+    policy = db.query(models.UserPolicy).filter(
+        models.UserPolicy.id == claim.user_policy_id
+    ).first()
+
+    if policy and policy.start_date:
+        days = (datetime.now().date() - policy.start_date).days
+
+        if days < 7:
+            risk_score += 30
+            fraud_flags.append(
+                models.FraudFlag(
+                    claim_id=claim.id,
+                    rule_code="EARLY_CLAIM",
+                    severity="medium",
+                    details="Claim filed within 7 days of policy purchase"
+                )
+            )
+
+    # Rule 3 — Duplicate Claim Amount
+    duplicate = db.query(models.Claim).filter(
+        models.Claim.user_policy_id == claim.user_policy_id,
+        models.Claim.amount_claimed == claim.amount_claimed,
+        models.Claim.id != claim.id
+    ).first()
+
+    if duplicate:
+        risk_score += 30
+        fraud_flags.append(
+            models.FraudFlag(
+                claim_id=claim.id,
+                rule_code="DUPLICATE_AMOUNT",
+                severity="low",
+                details="Same claim amount previously submitted"
+            )
+        )
+    claim.risk_score = risk_score
+    return fraud_flags
+    
+
 # ─────────────────── GET USER CLAIMS ───────────────────
 @router.get("/", response_model=list[schemas.ClaimResponse])
 def get_my_claims(
@@ -48,6 +109,10 @@ def get_my_claims(
         .all()
     )
     return claims
+
+
+
+
 
 
 # ─────────────────── CREATE CLAIM ───────────────────
@@ -79,6 +144,14 @@ def create_claim(
     new_claim.claim_number = generate_claim_number(new_claim.id)
     db.commit()
     db.refresh(new_claim)
+    # ───────── RUN FRAUD CHECKS ─────────
+    fraud_flags = run_fraud_checks(new_claim, db)
+
+    for flag in fraud_flags:
+        db.add(flag)
+
+    db.commit()
+
     return new_claim
 
 
@@ -290,6 +363,13 @@ def submit_claim(
     claim.status = "submitted"
     db.commit()
     db.refresh(claim)
+    # ───────── RUN FRAUD CHECKS ─────────
+    fraud_flags = run_fraud_checks(claim, db)
+
+    for flag in fraud_flags:
+        db.add(flag)
+
+    db.commit()
 
     history_entry = models.ClaimStatusHistory(
         claim_id=claim.id,
@@ -357,3 +437,5 @@ def update_claim_status(
     )
 
     return claim
+
+
