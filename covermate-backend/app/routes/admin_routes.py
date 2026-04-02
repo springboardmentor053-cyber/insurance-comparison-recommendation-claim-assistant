@@ -121,6 +121,7 @@ def list_claims(
             joinedload(models.Claim.user_policy).joinedload(models.UserPolicy.policy),
             joinedload(models.Claim.documents),
             joinedload(models.Claim.status_history),
+            joinedload(models.Claim.fraud_flags),
         )
     )
     if status:
@@ -198,3 +199,26 @@ def get_admin_logs(
         .order_by(models.AdminLog.timestamp.desc())
         .offset(skip).limit(limit).all()
     )
+# ─────────────────── FRAUD ANALYTICS ───────────────────
+@router.get("/fraud-analytics")
+def fraud_analytics(
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_admin),
+):
+
+    total_claims = db.query(models.Claim).count()
+
+    fraud_claims = db.query(models.FraudFlag).count()
+
+    safe_claims = total_claims - fraud_claims
+
+    fraud_rate = 0
+    if total_claims > 0:
+        fraud_rate = round((fraud_claims / total_claims) * 100, 2)
+
+    return {
+        "total_claims": total_claims,
+        "fraud_claims": fraud_claims,
+        "safe_claims": safe_claims,
+        "fraud_rate_percent": fraud_rate
+    }
