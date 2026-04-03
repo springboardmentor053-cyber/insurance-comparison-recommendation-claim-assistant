@@ -1,19 +1,19 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Home.css";
 
 function Home() {
   const navigate = useNavigate();
+  const [msg, setMsg] = useState("");
 
   const handleRecommendationClick = () => {
-  const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
-  if (!token) {
-    alert("Please login first to get recommendations");
-    navigate("/login");
-    return;
-  }
-
-  // navigate("/recommendation-setup");
+    if (!token) {
+      setMsg("Please login first to get recommendations.");
+      setTimeout(() => setMsg(""), 3000);
+      return;
+    }
 
   const savedRecommendations = localStorage.getItem("recommendations");
 
@@ -26,7 +26,24 @@ function Home() {
 
   return (
     <div className="home-container">
-      
+
+      {msg && (
+        <div style={{
+          maxWidth: "460px",
+          margin: "0 auto 20px",
+          padding: "12px 16px",
+          borderRadius: "10px",
+          textAlign: "center",
+          fontSize: "14px",
+          fontWeight: "500",
+          background: "#fef2f2",
+          color: "#b91c1c",
+          border: "1px solid #fecaca",
+        }}>
+          {msg}
+        </div>
+      )}
+
       {/* Hero Section */}
       <div className="hero">
         <h1>Secure Your Future Today</h1>
@@ -43,9 +60,6 @@ and make smarter financial decisions.
       Get Recommendations
     </button>
 
-          {/* <button onClick={() => navigate("/recommendations")}>
-            Get Recommendations
-          </button> */}
         </div>
       </div>
 

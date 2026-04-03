@@ -34,12 +34,11 @@ function Login() {
         { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
       );
 
-      //Save as token only — never touches admin_token
       localStorage.setItem("token", response.data.access_token);
-      // localStorage.removeItem("token");
+    
       window.dispatchEvent(new Event("storage"));
       navigate("/profile");
-      // window.location.reload();
+      
     } catch (err) {
       const detail = err.response?.data?.detail || "";
       if (detail.includes("Admin accounts must use")) {

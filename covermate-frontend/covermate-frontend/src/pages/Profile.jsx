@@ -22,7 +22,7 @@ function Profile() {
 
   if (loading) return <p className="loading-text">Loading...</p>;
 
-  // Generate initials — "Rahul Sharma" → "RS"
+  // Generate initials 
   const initials = user.name
     .split(" ")
     .map((n) => n[0])

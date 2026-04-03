@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from datetime import datetime, timedelta
 from app.database import get_db
 from app.models.claim import Claim
+from app.models.claim_document import ClaimDocument
 from app.models.claim_status_history import ClaimStatusHistory
 from app.models.user_policy import UserPolicy
 from app.models.user import User
@@ -16,41 +17,45 @@ import io
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
-# ── Valid status transitions ───────────────────────────────────
+
 VALID_TRANSITIONS = {
-    "submitted":    ["under_review"],
+    "submitted": ["under_review"],
     "under_review": ["approved", "rejected"],
-    "approved":     ["paid"],
-    "rejected":     [],
-    "paid":         []
+    "approved": ["paid"],
+    "rejected": [],
+    "paid": []
 }
 
-# ── Fraud rules ────────────────────────────────────────────────
+
 FRAUD_RULES = {
     "duplicate_within_days": 30,
     "amount_multiplier": 3.0,
 }
 
 
-# ── Helpers ────────────────────────────────────────────────────
 def require_admin(current_user: User):
     if not current_user.is_admin:
         raise HTTPException(status_code=403, detail="Admin access required")
 
+
 def record_history(claim_id: int, status: str, changed_by: str, db: Session):
     db.add(ClaimStatusHistory(claim_id=claim_id, status=status, changed_by=changed_by))
 
+
 def run_fraud_checks(claim: Claim, db: Session) -> list:
+
     flags = []
 
     # Rule 1 — Duplicate claim within 30 days
     cutoff = datetime.utcnow() - timedelta(days=FRAUD_RULES["duplicate_within_days"])
+
     duplicate = db.query(Claim).filter(
         Claim.user_policy_id == claim.user_policy_id,
         Claim.id != claim.id,
         Claim.status != "draft",
         Claim.created_at >= cutoff
     ).first()
+
     if duplicate:
         flags.append({
             "rule_code": "DUPLICATE_CLAIM",
@@ -60,10 +65,14 @@ def run_fraud_checks(claim: Claim, db: Session) -> list:
 
     # Rule 2 — Amount too high vs premium
     user_policy = db.query(UserPolicy).filter(UserPolicy.id == claim.user_policy_id).first()
+
     if user_policy:
         policy = db.query(Policy).filter(Policy.id == user_policy.policy_id).first()
+
         if policy and claim.amount_claimed:
+
             threshold = float(policy.premium) * FRAUD_RULES["amount_multiplier"]
+
             if float(claim.amount_claimed) > threshold:
                 flags.append({
                     "rule_code": "HIGH_AMOUNT",
@@ -73,25 +82,84 @@ def run_fraud_checks(claim: Claim, db: Session) -> list:
 
     # Rule 3 — Future incident date
     if claim.incident_date and claim.incident_date > datetime.utcnow().date():
+
         flags.append({
             "rule_code": "FUTURE_DATE",
             "severity": "high",
             "detail": f"Incident date {claim.incident_date} is in the future"
         })
 
+    # Rule 4 — Duplicate document across claims (only within same user)
+
+    docs = db.query(ClaimDocument).filter(
+        ClaimDocument.claim_id == claim.id
+    ).all()
+
+    if user_policy:
+
+        user_claim_ids = [
+            c.id for c in db.query(Claim).join(UserPolicy)
+            .filter(
+                UserPolicy.user_id == user_policy.user_id,
+                Claim.id != claim.id,
+                Claim.status != "draft"
+            ).all()
+        ]
+
+    else:
+        user_claim_ids = []
+
+    for doc in docs:
+
+        filename = doc.file_url.split("/")[-1]
+
+        all_other_docs = db.query(ClaimDocument).filter(
+            ClaimDocument.claim_id.in_(user_claim_ids)
+        ).all() if user_claim_ids else []
+
+        duplicate_doc = next(
+            (d for d in all_other_docs if d.file_url.split("/")[-1] == filename),
+            None
+        )
+
+        if duplicate_doc:
+
+            flags.append({
+                "rule_code": "DUP_DOC",
+                "severity": "high",
+                "detail": f"Document '{filename}' was already submitted in another claim"
+            })
+
+            break
+
+    # Rule 5 — Suspicious timing
+    user_policy_for_timing = db.query(UserPolicy).filter(
+        UserPolicy.id == claim.user_policy_id
+    ).first()
+
+    if user_policy_for_timing and claim.incident_date and user_policy_for_timing.purchase_date:
+
+        days_diff = (claim.incident_date - user_policy_for_timing.purchase_date.date()).days
+
+        if days_diff < 2:
+
+            flags.append({
+                "rule_code": "SUSPICIOUS_TIMING",
+                "severity": "medium",
+                "detail": f"Incident date is within 2 days of policy purchase date ({user_policy_for_timing.purchase_date.date()})"
+            })
+
     return flags
 
 
-# ══════════════════════════════════════════════════════════════
-# ADMIN ENDPOINTS
-# ══════════════════════════════════════════════════════════════
+# GET ALL CLAIMS
 
-# ── GET /admin/claims ──────────────────────────────────────────
 @router.get("/claims")
 def get_all_claims(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
 ):
+
     require_admin(current_user)
 
     results = (
@@ -104,8 +172,11 @@ def get_all_claims(
     )
 
     claims_data = []
+
     for claim, user_policy, user in results:
+
         fraud_flags = run_fraud_checks(claim, db)
+
         claims_data.append({
             "claim_id": claim.id,
             "claim_number": claim.claim_number,
@@ -123,24 +194,27 @@ def get_all_claims(
     return claims_data
 
 
-# ── PUT /admin/claims/{claim_id}/status ───────────────────────
 class StatusUpdate(BaseModel):
     status: str
 
+
 @router.put("/claims/{claim_id}/status")
 def update_claim_status(
-    claim_id: int,
-    data: StatusUpdate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+        claim_id: int,
+        data: StatusUpdate,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
 ):
+
     require_admin(current_user)
 
     claim = db.query(Claim).filter(Claim.id == claim_id).first()
+
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
 
     allowed = VALID_TRANSITIONS.get(claim.status, [])
+
     if data.status not in allowed:
         raise HTTPException(
             status_code=400,
@@ -152,13 +226,13 @@ def update_claim_status(
 
     old_status = claim.status
     claim.status = data.status
+
     db.commit()
     db.refresh(claim)
 
     record_history(claim.id, data.status, f"admin:{current_user.email}", db)
     db.commit()
 
-    # Send email notification via Celery
     email_message = f"""Hello {user.name},
 
 Your insurance claim has been updated.
@@ -167,14 +241,10 @@ Claim Number : {claim.claim_number}
 Claim Type   : {claim.claim_type}
 New Status   : {data.status.replace("_", " ").title()}
 
-{"Your claim has been approved. Our team will process your payment shortly." if data.status == "approved" else ""}
-{"Your payment has been processed. Thank you for choosing CoverMate." if data.status == "paid" else ""}
-{"Your claim is currently under review. We will update you soon." if data.status == "under_review" else ""}
-{"Unfortunately your claim has been rejected. Please contact support for more details." if data.status == "rejected" else ""}
-
 Thank you,
 CoverMate Team
 """
+
     send_email_task.delay(
         user.email,
         f"CoverMate - Claim {claim.claim_number} Status Update",
@@ -189,45 +259,27 @@ CoverMate Team
     }
 
 
-# ── GET /admin/claims/{claim_id}/fraud-check ──────────────────
-@router.get("/claims/{claim_id}/fraud-check")
-def check_fraud(
-    claim_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    require_admin(current_user)
-    claim = db.query(Claim).filter(Claim.id == claim_id).first()
-    if not claim:
-        raise HTTPException(status_code=404, detail="Claim not found")
-    flags = run_fraud_checks(claim, db)
-    return {
-        "claim_id": claim.id,
-        "claim_number": claim.claim_number,
-        "fraud_flags": flags,
-        "is_flagged": len(flags) > 0,
-        "flag_count": len(flags)
-    }
-
-
-# ── GET /admin/analytics ──────────────────────────────────────
 @router.get("/analytics")
 def get_analytics(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
 ):
+
     require_admin(current_user)
 
     all_claims = db.query(Claim).filter(Claim.status != "draft").all()
+
     total = len(all_claims)
-    submitted    = sum(1 for c in all_claims if c.status == "submitted")
+    submitted = sum(1 for c in all_claims if c.status == "submitted")
     under_review = sum(1 for c in all_claims if c.status == "under_review")
-    approved     = sum(1 for c in all_claims if c.status == "approved")
-    rejected     = sum(1 for c in all_claims if c.status == "rejected")
-    paid         = sum(1 for c in all_claims if c.status == "paid")
-    flagged      = sum(1 for c in all_claims if len(run_fraud_checks(c, db)) > 0)
+    approved = sum(1 for c in all_claims if c.status == "approved")
+    rejected = sum(1 for c in all_claims if c.status == "rejected")
+    paid = sum(1 for c in all_claims if c.status == "paid")
+    flagged = sum(1 for c in all_claims if len(run_fraud_checks(c, db)) > 0)
+
     total_amount = sum(float(c.amount_claimed) for c in all_claims if c.amount_claimed)
-    total_users  = db.query(User).filter(User.is_admin == False).count()
+
+    total_users = db.query(User).filter(User.is_admin == False).count()
 
     return {
         "total_claims": total,
@@ -242,7 +294,8 @@ def get_analytics(
     }
 
 
-# ── GET /admin/export/claims ── ✅ CSV Export ─────────────────
+# EXPORT CLAIMS CSV
+
 @router.get("/export/claims")
 def export_claims_csv(
     db: Session = Depends(get_db),
@@ -259,20 +312,19 @@ def export_claims_csv(
         .all()
     )
 
-    # Create CSV in memory
     output = io.StringIO()
     writer = csv.writer(output)
 
-    # Header row
     writer.writerow([
         "Claim Number", "User Name", "Email",
         "Claim Type", "Amount Claimed (Rs.)",
         "Incident Date", "Status", "Fraud Flagged", "Filed On"
     ])
 
-    # Data rows
     for claim, user_policy, user in results:
+
         fraud_flags = run_fraud_checks(claim, db)
+
         writer.writerow([
             claim.claim_number,
             user.name,
@@ -287,7 +339,6 @@ def export_claims_csv(
 
     output.seek(0)
 
-    # Return as downloadable CSV file
     return StreamingResponse(
         io.BytesIO(output.getvalue().encode("utf-8")),
         media_type="text/csv",

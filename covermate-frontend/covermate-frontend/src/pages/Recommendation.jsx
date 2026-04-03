@@ -1,8 +1,17 @@
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 function Recommendation() {
   const location = useLocation();
   const navigate = useNavigate();
+
+  const [msg, setMsg] = useState({ text: "", type: "" });
+
+  const showMsg = (text, type = "success") => {
+    setMsg({ text, type });
+    setTimeout(() => setMsg({ text: "", type: "" }), 3000);
+  };
 
   const savedPolicies = JSON.parse(localStorage.getItem("recommendations"));
 
@@ -21,28 +30,44 @@ function Recommendation() {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      alert("Please login first");
+      showMsg("Please login first to purchase a policy.", "error");
       return;
     }
 
     try {
-      await fetch(`http://127.0.0.1:8000/user-policies/purchase/${policyId}`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      alert("Policy purchased successfully!");
+      await axios.post(
+        `http://127.0.0.1:8000/user-policies/purchase/${policyId}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      showMsg("Policy purchased successfully!");
     } catch (error) {
       console.error("Purchase failed", error);
-      alert("Failed to purchase policy");
+      const detail = error?.response?.data?.detail;
+      showMsg(detail || "Failed to purchase policy. Please try again.", "error");
     }
   };
 
   return (
     <div style={{ padding: "40px" }}>
       <h2>Recommended Policies</h2>
+
+      {msg.text && (
+        <div style={{
+          maxWidth: "500px",
+          margin: "0 0 20px",
+          padding: "12px 16px",
+          borderRadius: "10px",
+          textAlign: "center",
+          fontSize: "14px",
+          fontWeight: "500",
+          background: msg.type === "success" ? "#f0fdf4" : "#fef2f2",
+          color: msg.type === "success" ? "#15803d" : "#b91c1c",
+          border: `1px solid ${msg.type === "success" ? "#bbf7d0" : "#fecaca"}`,
+        }}>
+          {msg.text}
+        </div>
+      )}
 
       {policies.map((policy) => {
         const matchPercent = Math.min(

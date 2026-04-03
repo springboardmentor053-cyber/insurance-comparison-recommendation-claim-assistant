@@ -86,6 +86,7 @@ def create_or_resume_draft(
     if existing_draft:
         existing_draft.claim_type = data.claim_type
         db.commit()
+        
         db.refresh(existing_draft)
         return {
             "claim_id": existing_draft.id,

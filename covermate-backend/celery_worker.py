@@ -22,7 +22,7 @@ GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD", "your_app_password")
 # ── Send email function ────────────────────────────────────────
 def send_email(to_email: str, subject: str, message: str):
     try:
-        # ✅ Use MIMEMultipart for proper UTF-8 encoding
+        # Use MIMEMultipart for proper UTF-8 encoding
         msg = MIMEMultipart()
         msg["From"] = GMAIL_ADDRESS
         msg["To"] = to_email

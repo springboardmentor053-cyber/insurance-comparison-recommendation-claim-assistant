@@ -11,7 +11,6 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-
 # ── Register 
 @router.post("/register")
 def register(user: UserCreate, db: Session = Depends(get_db)):

@@ -19,4 +19,4 @@ start "Celery" cmd /k "D:\covermate-backend\venv\Scripts\activate && cd C:\Insur
 :: Terminal 4 - Frontend
 start "Frontend" cmd /k "cd C:\Insurance-Comparison-Recommendation-Claim-Assistant\covermate-frontend\covermate-frontend && npm run dev"
 
-echo All services started!
+::echo All services started!

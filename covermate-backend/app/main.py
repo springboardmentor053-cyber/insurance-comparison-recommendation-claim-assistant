@@ -2,9 +2,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
+from dotenv import load_dotenv
 from app.database import engine, Base, SessionLocal
 
-# ✅ All models imported before create_all
+load_dotenv()
+
+# All models imported before create_all
 from app.models.user import User
 from app.models.provider import Provider
 from app.models.policy import Policy, PolicyType
@@ -22,16 +25,15 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[os.getenv("FRONTEND_URL", "http://localhost:5173")],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ✅ Create uploads folder if it doesn't exist
+# Create uploads folder if it doesn't exist
 os.makedirs("uploads", exist_ok=True)
 
-# ✅ Serve uploaded files at /uploads — so frontend can open them
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # Create all DB tables

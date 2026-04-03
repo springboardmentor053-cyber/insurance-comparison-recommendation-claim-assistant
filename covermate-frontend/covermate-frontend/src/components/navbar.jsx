@@ -16,7 +16,7 @@ function Navbar() {
     const userToken = localStorage.getItem("token");
     setIsAdminLoggedIn(!!adminToken);
     setIsUserLoggedIn(!!userToken);
-    setMenuOpen(false); // close menu on route change
+    setMenuOpen(false); 
   }, [location.pathname]);
 
   const handleLogout = () => {
