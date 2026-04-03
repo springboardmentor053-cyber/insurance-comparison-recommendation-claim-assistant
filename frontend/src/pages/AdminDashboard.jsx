@@ -60,10 +60,31 @@ const AdminDashboard = () => {
       alert('Failed to update status');
     }
   };
-
-  const exportClaims = () => {
-    window.open('http://localhost:8000/admin/export/claims', '_blank');
-  };
+const exportClaims = async () => {
+  try {
+    const response = await API.get('/admin/export/claims', {
+      responseType: 'blob'  // important for file download
+    });
+    // Create a blob URL and trigger download
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = 'claims.csv';
+    if (contentDisposition) {
+      const match = contentDisposition.match(/filename=(.+)/);
+      if (match && match[1]) filename = match[1];
+    }
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error('Export failed', err);
+    alert('Failed to export claims. Check console for details.');
+  }
+};
 
   const getStatusColor = (status) => {
     switch (status) {
