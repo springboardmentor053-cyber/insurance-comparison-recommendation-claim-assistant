@@ -1,0 +1,31 @@
+# ─── Python / Backend ───
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.env
+uploads/
+
+# ─── Node / Frontend ───
+node_modules/
+dist/
+
+# ─── IDE / Editor ───
+.cursor/
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ─── OS ───
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Test / Scratch artifacts ───
+test_qa.py
+test.txt
+pdf_content.txt
+seed_new.py
+walkthrough.md
