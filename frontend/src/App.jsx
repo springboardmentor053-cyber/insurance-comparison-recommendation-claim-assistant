@@ -9,6 +9,7 @@ import MyClaims from "./pages/MyClaims";
 import PolicyDetail from "./pages/PolicyDetail";   
 import ClaimDetail from './pages/ClaimDetail';
 import AdminClaims from './pages/AdminClaims';
+import AdminDashboard from './pages/AdminDashboard'; // <-- new import
 
 function App() {
   const [user, setUser] = useState(null);
@@ -36,6 +37,9 @@ function App() {
     setUser(null);
     window.location.href = "/login";
   };
+
+  // Check if current user is admin (based on email)
+  const isAdmin = user?.email === "shatarupasen23801@gmail.com";
 
   return (
     <Router>
@@ -76,6 +80,11 @@ function App() {
                     <Link to="/claims" className="text-slate-400 hover:text-blue-600 transition text-[11px] font-black uppercase tracking-widest">
                       My Claims
                     </Link>
+                    {isAdmin && (
+                      <Link to="/admin" className="text-slate-400 hover:text-blue-600 transition text-[11px] font-black uppercase tracking-widest">
+                        Admin
+                      </Link>
+                    )}
                   </>
                 )}
               </div>
@@ -121,14 +130,15 @@ function App() {
               } 
             />
             <Route path="/policies" element={<Policies />} />
-            <Route path="/policies/:id" element={<PolicyDetail />} />   {/* new route */}
+            <Route path="/policies/:id" element={<PolicyDetail />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/claims/new" element={<ClaimWizard />} />
             <Route path="/my-policies" element={<MyPolicies />} />
             <Route path="/claims" element={<MyClaims />} />
             <Route path="/claims/:id" element={<ClaimDetail />} />
-            <Route path="/admin/claims" element={<AdminClaims />} />
+            <Route path="/admin/claims" element={<AdminDashboard />} />
+            <Route path="/admin" element={<AdminDashboard />} />
           </Routes>
         </main>
 

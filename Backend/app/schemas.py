@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr
 from datetime import date, datetime
 from typing import Optional, Any, Dict, List
 
-# User Schemas
+# --------------------- User Schemas ---------------------
 class UserCreate(BaseModel):
     name: str
     email: EmailStr
@@ -25,7 +25,7 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# Policy Schemas
+# --------------------- Policy Schemas ---------------------
 class PolicyResponse(BaseModel):
     id: int
     title: str
@@ -42,19 +42,41 @@ class PolicyResponse(BaseModel):
     class Config:
         from_attributes = True
 
-# UserPolicy Schemas (for claims wizard)
+# --------------------- UserPolicy Schemas (for claims wizard & admin) ---------------------
 class UserPolicyResponse(BaseModel):
     id: int
     policy_number: str
     status: str
     start_date: date
     end_date: date
-    policy: PolicyResponse  # Nested policy details
+    policy: PolicyResponse
+    user: "UserResponse"  # include user details for admin panel
 
     class Config:
         from_attributes = True
 
-# Claim Schemas
+# --------------------- Claim Document Schemas ---------------------
+class ClaimDocumentResponse(BaseModel):
+    id: int
+    file_url: str
+    doc_type: str
+    uploaded_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# --------------------- Fraud Flag Schemas ---------------------
+class FraudFlagResponse(BaseModel):
+    id: int
+    rule_code: str
+    severity: str
+    details: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+# --------------------- Claim Schemas ---------------------
 class ClaimBase(BaseModel):
     user_policy_id: int
     claim_type: str
@@ -81,47 +103,34 @@ class ClaimResponse(ClaimBase):
         from_attributes = True
 
 class ClaimDetailResponse(ClaimResponse):
-    user_policy: UserPolicyResponse  # Include policy details
-    documents: List["ClaimDocumentResponse"] = []
-
-class ClaimDocumentBase(BaseModel):
-    doc_type: str
-
-class ClaimDocumentCreate(ClaimDocumentBase):
-    pass
-
-class ClaimDocumentResponse(ClaimDocumentBase):
-    id: int
-    file_url: str
-    uploaded_at: datetime
+    user_policy: UserPolicyResponse
+    documents: List[ClaimDocumentResponse] = []
+    fraud_flags: List[FraudFlagResponse] = []   # added for fraud display
 
     class Config:
         from_attributes = True
 
-# Recommendation Schemas
+# --------------------- Recommendation Schemas ---------------------
 class UserPreferences(BaseModel):
-    """Schema for capturing user preferences for recommendations"""
     income: Optional[float] = None
     family_size: Optional[int] = 1
     smoker: Optional[bool] = False
     existing_conditions: List[str] = []
-    risk_appetite: str = "medium"  # low, medium, high
-    coverage_priority: str = "balanced"  # low_cost, balanced, maximum_coverage
-    preferred_policy_types: List[str] = []  # ['auto', 'health', 'life', 'home', 'travel']
+    risk_appetite: str = "medium"
+    coverage_priority: str = "balanced"
+    preferred_policy_types: List[str] = []
     max_budget: Optional[float] = None
-    employment_type: Optional[str] = None  # salaried, self_employed, business
-    travel_frequency: Optional[str] = None  # rarely, occasionally, frequently
+    employment_type: Optional[str] = None
+    travel_frequency: Optional[str] = None
     vehicle_owned: Optional[bool] = False
     home_owned: Optional[bool] = False
 
 class UserUpdate(BaseModel):
-    """Update user profile including risk_profile"""
     name: Optional[str] = None
     dob: Optional[date] = None
     risk_profile: Optional[Dict[str, Any]] = None
 
 class RecommendationResponse(BaseModel):
-    """Recommendation output schema"""
     id: int
     user_id: int
     policy_id: int
@@ -134,12 +143,10 @@ class RecommendationResponse(BaseModel):
         from_attributes = True
 
 class RecommendationRequest(BaseModel):
-    """Request to generate recommendations"""
     refresh: bool = False
     limit: int = 10
 
 class ScoringBreakdown(BaseModel):
-    """Detailed scoring breakdown for explainability"""
     coverage_score: float
     premium_score: float
     deductible_score: float
@@ -148,5 +155,6 @@ class ScoringBreakdown(BaseModel):
     total_score: float
     reason: str
 
-# For forward reference in ClaimDetailResponse
+# --------------------- Forward References ---------------------
+UserPolicyResponse.model_rebuild()
 ClaimDetailResponse.model_rebuild()

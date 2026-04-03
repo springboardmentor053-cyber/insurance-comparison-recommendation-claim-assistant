@@ -2,21 +2,19 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
 from sqlalchemy.orm import Session, joinedload
 from app import models, schemas, database
 from app.auth import get_current_user
+from app.fraud import run_fraud_checks   # <-- new import
 from typing import List
 import uuid
 import random
-import os
 import shutil
-from datetime import date
 from pathlib import Path
+from datetime import date
 
 router = APIRouter(prefix="/claims", tags=["claims"])
 
-# Define upload directory
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
 
-# Helper to generate unique claim number
 def generate_claim_number():
     return f"CLM-{uuid.uuid4().hex[:8].upper()}"
 
@@ -26,7 +24,6 @@ def get_user_policies(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    """Get all policies owned by the current user (for claim selection)"""
     user_policies = db.query(models.UserPolicy).options(
         joinedload(models.UserPolicy.policy)
     ).filter(
@@ -34,13 +31,11 @@ def get_user_policies(
     ).all()
     return user_policies
 
-# ---------- Get all policies purchased by user (My Policies page) ----------
 @router.get("/my-policies", response_model=List[schemas.UserPolicyResponse])
 def get_my_policies(
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    """Get all policies purchased by the current user (for My Policies page)"""
     user_policies = db.query(models.UserPolicy).options(
         joinedload(models.UserPolicy.policy)
     ).filter(
@@ -48,25 +43,21 @@ def get_my_policies(
     ).order_by(models.UserPolicy.created_at.desc()).all()
     return user_policies
 
-# ---------- Buy Policy ----------
 @router.post("/buy-policy/{policy_id}")
 def buy_policy(
     policy_id: int,
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    """Purchase a policy (creates a UserPolicy record)"""
     policy = db.query(models.Policy).filter(models.Policy.id == policy_id).first()
     if not policy:
         raise HTTPException(status_code=404, detail="Policy not found")
-
     existing = db.query(models.UserPolicy).filter(
         models.UserPolicy.user_id == current_user.id,
         models.UserPolicy.policy_id == policy_id
     ).first()
     if existing:
         raise HTTPException(status_code=400, detail="You already own this policy")
-
     user_policy = models.UserPolicy(
         user_id=current_user.id,
         policy_id=policy_id,
@@ -95,7 +86,6 @@ def create_claim(
     ).first()
     if not user_policy:
         raise HTTPException(status_code=404, detail="Policy not found")
-
     claim = models.Claim(
         user_policy_id=claim_data.user_policy_id,
         claim_number=generate_claim_number(),
@@ -154,6 +144,10 @@ def submit_claim(
         raise HTTPException(status_code=400, detail=f"Claim already {claim.status}")
     claim.status = "submitted"
     db.commit()
+
+    # Run fraud checks
+    run_fraud_checks(claim_id, db)
+
     db.refresh(claim)
     return claim
 
@@ -199,14 +193,11 @@ async def upload_document(
     ).first()
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
-    
-    # Save file locally
     filename = f"{claim_id}_{uuid.uuid4().hex}_{file.filename}"
     file_path = UPLOAD_DIR / filename
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     file_url = f"http://localhost:8000/uploads/{filename}"
-    
     doc = models.ClaimDocument(
         claim_id=claim_id,
         file_url=file_url,
@@ -231,16 +222,13 @@ async def upload_multiple_documents(
     ).first()
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
-
     uploaded_docs = []
     for file in files:
-        # Save file locally
         filename = f"{claim_id}_{uuid.uuid4().hex}_{file.filename}"
         file_path = UPLOAD_DIR / filename
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         file_url = f"http://localhost:8000/uploads/{filename}"
-        
         doc = models.ClaimDocument(
             claim_id=claim_id,
             file_url=file_url,
