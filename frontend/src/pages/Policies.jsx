@@ -25,6 +25,7 @@ const policyTypeIcons = {
 };
 
 function Policies({ showRecommendations: externalShowRecs, setShowRecommendations: externalSetShowRecs }) {
+  const [recommendationsRefreshKey, setRecommendationsRefreshKey] = useState(0);
   const navigate = useNavigate();
   const [policies, setPolicies] = useState([]);
   const [filteredPolicies, setFilteredPolicies] = useState([]);
@@ -207,15 +208,15 @@ function Policies({ showRecommendations: externalShowRecs, setShowRecommendation
   };
 
   const handlePreferencesComplete = () => {
-    setShowPreferencesWizard(false);
-    setShowRecommendations(true);
-    setShowFullRecommendations(false);
-    // Refresh user data
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  };
+  setShowPreferencesWizard(false);
+  setShowRecommendations(true);
+  setShowFullRecommendations(false);
+  const storedUser = localStorage.getItem("user");
+  if (storedUser) {
+    setUser(JSON.parse(storedUser));
+  }
+  setRecommendationsRefreshKey(prev => prev + 1);  // force refresh
+};
 
   // Loading state
   if (loading) {
@@ -477,7 +478,11 @@ function Policies({ showRecommendations: externalShowRecs, setShowRecommendation
               </button>
             </div>
           </div>
-          <RecommendationsList onSelectPolicy={(policy) => setViewingDetails(policy)} />
+          <RecommendationsList 
+  key={recommendationsRefreshKey} 
+  refreshKey={recommendationsRefreshKey} 
+  onSelectPolicy={(policy) => setViewingDetails(policy)} 
+/>
         </div>
       )}
 

@@ -21,12 +21,26 @@ const PreferencesWizard = ({ onComplete }) => {
 
   const [customCondition, setCustomCondition] = useState('');
 
-  // Load existing preferences
+  // Load existing preferences with proper defaults
   useEffect(() => {
     const loadPreferences = async () => {
       try {
         const res = await API.get('/recommendations/preferences');
-        setPreferences(prev => ({ ...prev, ...res.data }));
+        const data = res.data;
+        setPreferences({
+          income: data.income ?? '',
+          family_size: data.family_size ?? 1,
+          smoker: data.smoker ?? false,
+          existing_conditions: data.existing_conditions ?? [],
+          risk_appetite: data.risk_appetite ?? 'medium',
+          coverage_priority: data.coverage_priority ?? 'balanced',
+          preferred_policy_types: data.preferred_policy_types ?? [],
+          max_budget: data.max_budget ?? '',
+          employment_type: data.employment_type ?? '',
+          travel_frequency: data.travel_frequency ?? '',
+          vehicle_owned: data.vehicle_owned ?? false,
+          home_owned: data.home_owned ?? false
+        });
       } catch (err) {
         console.error('No existing preferences');
       }
@@ -43,12 +57,14 @@ const PreferencesWizard = ({ onComplete }) => {
   };
 
   const handlePolicyTypeToggle = (type) => {
-    setPreferences(prev => ({
-      ...prev,
-      preferred_policy_types: prev.preferred_policy_types.includes(type)
-        ? prev.preferred_policy_types.filter(t => t !== type)
-        : [...prev.preferred_policy_types, type]
-    }));
+    setPreferences(prev => {
+      const current = prev.preferred_policy_types;
+      const newTypes = current.includes(type)
+        ? current.filter(t => t !== type)
+        : [...current, type];
+      console.log('Preferred types updated:', newTypes);
+      return { ...prev, preferred_policy_types: newTypes };
+    });
   };
 
   const addCondition = () => {
@@ -69,22 +85,29 @@ const PreferencesWizard = ({ onComplete }) => {
   };
 
   const savePreferences = async () => {
-    setLoading(true);
-    try {
-      await API.post('/recommendations/preferences', preferences);
-      
-      // Generate recommendations after saving preferences
-      await API.post('/recommendations/generate', { refresh: true });
-      
-      if (onComplete) onComplete();
-    } catch (err) {
-      console.error('Failed to save preferences', err);
-      alert('Failed to save preferences. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  setLoading(true);
+  try {
+    // Convert empty strings to null for number fields
+    const toSend = {
+      ...preferences,
+      income: preferences.income === '' ? null : Number(preferences.income),
+      max_budget: preferences.max_budget === '' ? null : Number(preferences.max_budget),
+      // Ensure preferred_policy_types is always an array
+      preferred_policy_types: preferences.preferred_policy_types || []
+    };
+    console.log("Saving:", toSend);
+    const res = await API.post('/recommendations/preferences', toSend);
+    const updatedUser = res.data;
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    await API.post('/recommendations/generate', { refresh: true });
+    if (onComplete) onComplete();
+  } catch (err) {
+    console.error('Failed to save preferences', err);
+    alert('Failed to save preferences. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
   const nextStep = () => setStep(step + 1);
   const prevStep = () => setStep(step - 1);
 

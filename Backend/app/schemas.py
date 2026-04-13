@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, validator
 from datetime import date, datetime
 from typing import Optional, Any, Dict, List
 
@@ -50,7 +50,7 @@ class UserPolicyResponse(BaseModel):
     start_date: date
     end_date: date
     policy: PolicyResponse
-    user: "UserResponse"  # include user details for admin panel
+    user: "UserResponse"
 
     class Config:
         from_attributes = True
@@ -105,7 +105,7 @@ class ClaimResponse(ClaimBase):
 class ClaimDetailResponse(ClaimResponse):
     user_policy: UserPolicyResponse
     documents: List[ClaimDocumentResponse] = []
-    fraud_flags: List[FraudFlagResponse] = []   # added for fraud display
+    fraud_flags: List[FraudFlagResponse] = []
 
     class Config:
         from_attributes = True
@@ -124,6 +124,15 @@ class UserPreferences(BaseModel):
     travel_frequency: Optional[str] = None
     vehicle_owned: Optional[bool] = False
     home_owned: Optional[bool] = False
+
+    # ----- Validators to convert empty strings to None -----
+    @validator('income', 'max_budget', pre=True)
+    def empty_str_to_none(cls, v):
+        return None if v == "" else v
+
+    @validator('employment_type', 'travel_frequency', pre=True)
+    def empty_str_to_none_str(cls, v):
+        return None if v == "" else v
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None

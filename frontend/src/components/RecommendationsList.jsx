@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import API from '../api';
 import PremiumCalculator from './PremiumCalculator';
 
-const RecommendationsList = ({ onSelectPolicy }) => {
+const RecommendationsList = ({ onSelectPolicy, refreshKey }) => {  // <-- added refreshKey
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [explainingPolicy, setExplainingPolicy] = useState(null);
@@ -11,16 +11,13 @@ const RecommendationsList = ({ onSelectPolicy }) => {
 
   useEffect(() => {
     loadRecommendations();
-  }, []);
+  }, [refreshKey]);  // <-- re-run when refreshKey changes
 
   const loadRecommendations = async () => {
     setLoading(true);
     try {
-      // Get all recommendations first to know total count
       const allRes = await API.get('/recommendations/?limit=100');
       setTotalAvailable(allRes.data.length);
-      
-      // Then get only top 10 for display
       const res = await API.get('/recommendations/?limit=10');
       setRecommendations(res.data);
     } catch (err) {
@@ -63,7 +60,6 @@ const RecommendationsList = ({ onSelectPolicy }) => {
     return 'Low Match';
   };
 
-  // Policy type icons
   const policyTypeIcons = {
     'auto': '🚗',
     'health': '🏥',
@@ -119,13 +115,11 @@ const RecommendationsList = ({ onSelectPolicy }) => {
             key={rec.id}
             className="bg-white rounded-2xl border border-slate-200 p-6 hover:shadow-lg transition relative overflow-hidden"
           >
-            {/* Rank badge */}
             <div className="absolute top-0 left-0 bg-blue-600 text-white px-3 py-1 rounded-br-xl text-sm font-bold">
               #{index + 1}
             </div>
 
             <div className="flex flex-col md:flex-row gap-6 mt-4">
-              {/* Policy info */}
               <div className="flex-1">
                 <div className="flex items-start justify-between">
                   <div>
@@ -157,12 +151,10 @@ const RecommendationsList = ({ onSelectPolicy }) => {
                   <span className="text-slate-500">{rec.policy.term_months} months</span>
                 </div>
 
-                {/* Reason */}
                 <div className="mt-4 p-4 bg-slate-50 rounded-xl border-l-4 border-blue-400">
                   <p className="text-sm text-slate-600 italic">{rec.reason}</p>
                 </div>
 
-                {/* Actions */}
                 <div className="flex gap-3 mt-4">
                   <button
                     onClick={() => {
@@ -182,7 +174,6 @@ const RecommendationsList = ({ onSelectPolicy }) => {
                 </div>
               </div>
 
-              {/* Quick calculator preview */}
               <div className="md:w-80">
                 <PremiumCalculator
                   basePremium={rec.policy.premium}
@@ -193,7 +184,6 @@ const RecommendationsList = ({ onSelectPolicy }) => {
               </div>
             </div>
 
-            {/* Explanation modal */}
             {explainingPolicy === rec.policy.id && explanation && (
               <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                 <div className="bg-white max-w-md w-full rounded-3xl p-8 relative">
@@ -203,14 +193,9 @@ const RecommendationsList = ({ onSelectPolicy }) => {
                   >
                     ×
                   </button>
-
                   <h3 className="text-2xl font-black text-slate-900 mb-4">Why we recommended this</h3>
-
                   <div className="space-y-4">
-                    <div>
-                      <p className="text-slate-600 mb-2">{explanation.reason}</p>
-                    </div>
-
+                    <p className="text-slate-600 mb-2">{explanation.reason}</p>
                     <div className="bg-slate-50 p-4 rounded-xl">
                       <h4 className="font-bold text-slate-700 mb-3">Score Breakdown</h4>
                       {explanation.breakdown && (
@@ -234,7 +219,6 @@ const RecommendationsList = ({ onSelectPolicy }) => {
                         </div>
                       )}
                     </div>
-
                     <div className="bg-blue-50 p-4 rounded-xl">
                       <h4 className="font-bold text-blue-700 mb-2">Your Profile</h4>
                       <p className="text-sm text-blue-600">Age: {explanation.user_profile?.age} years</p>

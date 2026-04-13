@@ -15,18 +15,38 @@ async def update_preferences(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(database.get_db)
 ):
-    """Update user preferences for recommendations"""
-    # Merge with existing risk_profile
+    print("Received preferences:", preferences.model_dump())
+
     existing_profile = current_user.risk_profile or {}
-    
-    # Only update fields that are provided
-    pref_dict = preferences.dict(exclude_unset=True)
-    existing_profile.update(pref_dict)
-    
-    current_user.risk_profile = existing_profile
+
+    # ✅ FIX: include all fields (even empty arrays)
+    pref_dict = preferences.model_dump()
+
+    # ✅ safer merge
+    updated_profile = {
+        **existing_profile,
+        **pref_dict
+    }
+
+    # Map risk_appetite to display level
+    risk_appetite = preferences.risk_appetite
+    if risk_appetite == "low":
+        level = "Low"
+    elif risk_appetite == "medium":
+        level = "Medium"
+    elif risk_appetite == "high":
+        level = "High"
+    else:
+        level = "Standard"
+
+    updated_profile["level"] = level
+
+    print("Updated profile:", updated_profile)  # 🔥 DEBUG
+
+    current_user.risk_profile = updated_profile
     db.commit()
     db.refresh(current_user)
-    
+
     return current_user
 
 @router.get("/preferences", response_model=schemas.UserPreferences)
